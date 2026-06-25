@@ -5,9 +5,6 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from leads.pipeline import run_initial_pipeline, run_followup_pipeline
-from leads.outreach import get_stats
-
 router = APIRouter(prefix="/api/v1/leads", tags=["leads"])
 
 CRON_SECRET = os.getenv("LEADS_CRON_SECRET", "")
@@ -30,6 +27,8 @@ async def run_pipeline_endpoint(
     secret: Optional[str] = Query(None),
 ):
     _verify_secret(secret)
+
+    from leads.pipeline import run_initial_pipeline, run_followup_pipeline
 
     city_list = []
     for part in cities.split(","):
@@ -56,4 +55,5 @@ async def run_pipeline_endpoint(
 @router.get("/stats")
 async def pipeline_stats(secret: Optional[str] = Query(None)):
     _verify_secret(secret)
+    from leads.outreach import get_stats
     return get_stats()
