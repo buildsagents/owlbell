@@ -116,4 +116,4 @@ async def last_run(secret: Optional[str] = Query(None)):
 @router.get("/stats")
 async def pipeline_stats(secret: Optional[str] = Query(None)):
     _verify_secret(secret)
-    return get_stats())
+    return get_stats()
