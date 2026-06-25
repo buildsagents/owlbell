@@ -31,7 +31,6 @@ _MISSED_STATUSES = (
     CallStatus.NO_ANSWER,
     CallStatus.FAILED,
     CallStatus.VOICEMAIL,
-    CallStatus.BUSY,
 )
 
 
