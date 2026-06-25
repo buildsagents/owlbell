@@ -1,23 +1,20 @@
+"""leads route — synchronous pipeline (split scrape/send to avoid Railway timeout)."""
+
 from __future__ import annotations
 
-import asyncio
 import os
-import threading
-import time
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.leads.scraper import find_contractors
+from backend.leads.scraper import find_contractors, is_configured as scraper_configured
 from backend.leads.email_finder import find_emails_for_leads
-from backend.leads.outreach import send_initial_outreach, send_followups, get_stats
+from backend.leads.outreach import send_initial_outreach, get_stats
 from backend.leads import lead_store
 
 router = APIRouter(prefix="/api/v1/leads", tags=["leads"])
 
 CRON_SECRET = os.getenv("LEADS_CRON_SECRET", "")
-RUNNING = threading.Event()  # prevents overlapping runs
-_last_run: dict = {}
 
 
 def _verify_secret(secret: Optional[str] = None) -> None:
@@ -27,50 +24,39 @@ def _verify_secret(secret: Optional[str] = None) -> None:
         raise HTTPException(status_code=403, detail="Invalid secret")
 
 
-def _run_pipeline_sync(
-    mode: str,
-    trades: list[str],
-    cities: list[dict],
-    max_leads: int,
-    max_outreach: int,
-) -> dict[str, Any]:
-    """Synchronous pipeline runner for background thread — no asyncio needed."""
-    import asyncio
-    import time as _time
-
-    asyncio.run(_run_async(mode, trades, cities, max_leads, max_outreach))
-    return _last_run.get("result", {"status": "unknown"})
-
-
-async def _run_async(
-    mode: str,
-    trades: list[str],
-    cities: list[dict],
-    max_leads: int,
-    max_outreach: int,
-) -> dict[str, Any]:
-    from leads.pipeline import run_initial_pipeline, run_followup_pipeline
-
-    if mode == "followup":
-        return await run_followup_pipeline(max_daily_outreach=max_outreach)
-    return await run_initial_pipeline(
-        trades=trades,
-        cities=cities,
-        max_leads=max_leads,
-        max_daily_outreach=max_outreach,
-    )
-
-
 @router.post("/run")
-async def run_pipeline_endpoint(
-    mode: str = Query("initial", description="'initial' or 'followup'"),
+async def run_pipeline(
+    mode: str = Query("initial", description="'initial' (scrape+sand), 'send' (send pending)"),
     trades: str = Query("hvac,plumbing,roofing,electrical"),
     cities: str = Query("Austin-TX,RoundRock-TX,CedarPark-TX"),
     max_leads: int = Query(80),
-    max_outreach: int = Query(80),
+    max_outreach: int = Query(5, description="Max to send (keep low to avoid timeout)"),
     secret: Optional[str] = Query(None),
 ):
+    """Scrape + find emails (mode=initial, fast) or send pending (mode=send, send pending)."""
     _verify_secret(secret)
+
+    if mode == "send":
+        pending = lead_store.get_pending_send()
+        total_pending = len(pending)
+        to_send = pending[:max_outreach]
+        sent = 0
+        errors = 0
+        for lead in to_send:
+            from backend.leads.outreach import send_initial
+
+            result = await send_initial(lead, dry_run=False)
+            if result.get("success"):
+                lead_store.mark_sent(lead["email"])
+                sent += 1
+            else:
+                errors += 1
+            import asyncio
+            await asyncio.sleep(1)
+        return {"status": "ok", "mode": "send", "pending": total_pending, "sent": sent, "errors": errors}
+
+    if not scraper_configured():
+        return {"status": "error", "error": "Google Maps API key not configured"}
 
     city_list = []
     for part in cities.split(","):
@@ -81,37 +67,23 @@ async def run_pipeline_endpoint(
 
     trade_list = [t.strip() for t in trades.split(",")]
 
-    if RUNNING.is_set():
-        return {"status": "already_running", "mode": mode}
+    leads = await find_contractors(trades=trade_list, cities=city_list, max_per_search=min(max_leads, 20))
+    if not leads:
+        return {"status": "error", "error": "No leads found"}
 
-    RUNNING.set()
+    leads_with_emails = await find_emails_for_leads(leads)
+    with_email = [l for l in leads_with_emails if l.get("email")]
 
-    async def _bg():
-        global _last_run
-        try:
-            result = await _run_async(mode, trade_list, city_list, max_leads, max_outreach)
-            _last_run = {"status": "done", "result": result, "ts": time.time()}
-        except Exception as exc:
-            _last_run = {"status": "error", "error": str(exc), "ts": time.time()}
-        finally:
-            RUNNING.clear()
+    result = {"leads_found": len(leads), "with_email": len(with_email)}
 
-    t = threading.Thread(target=lambda: asyncio.run(_bg()), daemon=True)
-    t.start()
+    if with_email and max_outreach > 0:
+        outreach_results = await send_initial_outreach(with_email, max_per_day=max_outreach)
+        sent_count = sum(1 for r in outreach_results if r.get("outreach_status") == "sent")
+        result["emails_sent"] = sent_count
+    else:
+        result["emails_sent"] = 0
 
-    return {
-        "status": "accepted",
-        "mode": mode,
-        "message": "Pipeline started in background. See /api/v1/leads/last-run and /api/v1/leads/stats for progress.",
-    }
-
-
-@router.get("/last-run")
-async def last_run(secret: Optional[str] = Query(None)):
-    _verify_secret(secret)
-    if not _last_run:
-        return {"status": "no_runs_yet"}
-    return _last_run
+    return {"status": "ok", "mode": "initial", **result}
 
 
 @router.get("/stats")
