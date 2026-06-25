@@ -1,0 +1,77 @@
+# ============================================================
+# Owlbell — FreeSWITCH PBX Dockerfile
+# ============================================================
+# Architecture: ARM64 optimized, ESL enabled
+# Base: Debian Bookworm Slim
+# Features: Full SIP/RTP support, event socket, custom configs
+# ============================================================
+
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install FreeSWITCH and dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg2 \
+    wget \
+    ca-certificates \
+    curl \
+    lsb-release \
+    netcat-traditional \
+    sox \
+    libsox-fmt-all \
+    && wget -O - https://files.freeswitch.org/repo/deb/debian-release/fsstretch-archive-keyring.asc | apt-key add - \
+    && echo "deb http://files.freeswitch.org/repo/deb/debian-release/ $(lsb_release -cs) main" \
+       > /etc/apt/sources.list.d/freeswitch.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       freeswitch-meta-all \
+       freeswitch-mod-event-socket \
+       freeswitch-mod-rayo \
+       freeswitch-mod-http-cache \
+       freeswitch-mod-shout \
+       freeswitch-mod-flite \
+       freeswitch-mod-tone-stream \
+       freeswitch-mod-spandsp \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Copy custom configuration
+COPY conf/ /etc/freeswitch/
+
+# Copy custom Lua scripts
+COPY scripts/ /usr/share/freeswitch/scripts/
+RUN chmod +x /usr/share/freeswitch/scripts/*.lua 2>/dev/null || true
+
+# Create required directories with proper permissions
+RUN mkdir -p /var/lib/freeswitch/recordings \
+    /var/lib/freeswitch/storage \
+    /usr/share/freeswitch/sounds \
+    /var/log/freeswitch \
+    /var/run/freeswitch \
+    && chown -R freeswitch:freeswitch /var/lib/freeswitch \
+    /usr/share/freeswitch \
+    /var/log/freeswitch \
+    /var/run/freeswitch \
+    /etc/freeswitch
+
+# Switch to freeswitch user
+USER freeswitch
+
+# Health check via ESL
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD fs_cli -x "sofia status" || exit 1
+
+# Expose all FreeSWITCH ports
+# SIP (UDP/TCP), SIP TLS, WS, WSS, ESL, RTP
+EXPOSE 5060/tcp 5060/udp 5061/tcp 5080/tcp 5080/udp \
+       8021/tcp 7443/tcp \
+       16384-16484/udp
+
+# Start FreeSWITCH without NAT traversal, no process priority
+CMD ["freeswitch", "-nonat", "-np", "-u", "freeswitch", "-g", "freeswitch"]
+
+LABEL org.opencontainers.image.title="Owlbell - FreeSWITCH"
+LABEL org.opencontainers.image.description="SIP/RTP telephony engine with ESL"
+LABEL org.opencontainers.image.vendor="Owlbell"
+LABEL org.opencontainers.image.source="https://github.com/answerflowai/answerflow"

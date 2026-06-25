@@ -1,0 +1,305 @@
+# =============================================================================
+# Owlbell — Docker Compose Development Overrides
+# =============================================================================
+# This file extends docker-compose.yml with development-specific settings.
+# It is automatically picked up by docker compose when named
+# docker-compose.override.yml in the project root.
+#
+# Usage:
+#   docker compose -f infrastructure/docker/docker-compose.yml up -d
+#   # override is applied automatically
+#
+# For production, explicitly exclude this file:
+#   docker compose -f infrastructure/docker/docker-compose.yml -f infrastructure/docker/docker-compose.prod.yml up -d
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # API Backend — Development Overrides
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ./backend
+      dockerfile: ../infrastructure/docker/Dockerfile.api
+      target: development
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir /app
+      --log-level debug
+      --access-log
+    ports:
+      # Main API port
+      - "8000:8000"
+      # Debug port (for remote debugging with pdb/ipdb)
+      - "5678:5678"
+    volumes:
+      # Mount source code for live reload
+      - ./backend:/app:cached
+      # Persist virtual environment (avoid rebuild on every container start)
+      - api-venv:/app/.venv
+      # Mount local model caches for AI pipeline testing
+      - ./models:/app/models:ro
+      # Mount recordings directory
+      - ./recordings:/app/recordings
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      # Enable reload
+      - UVICORN_RELOAD=true
+      # Twilio (phone numbers + SIP trunk to Retell)
+      - INTEGRATION_TWILIO_ACCOUNT_SID=${INTEGRATION_TWILIO_ACCOUNT_SID}
+      - INTEGRATION_TWILIO_AUTH_TOKEN=${INTEGRATION_TWILIO_AUTH_TOKEN}
+      - INTEGRATION_TWILIO_SIP_TRUNK_TERMINATION_URI=${INTEGRATION_TWILIO_SIP_TRUNK_TERMINATION_URI}
+      - INTEGRATION_RETELL_API_KEY=${INTEGRATION_RETELL_API_KEY}
+      - INTEGRATION_RETELL_WEBHOOK_SECRET=${INTEGRATION_RETELL_WEBHOOK_SECRET}
+      # Database (use docker-compose service name)
+      - DATABASE_URL=postgresql+asyncpg://answerflow:answerflow@postgres:5432/answerflow
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      # Celery broker
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      # Disable S3 for local dev (use local storage)
+      - S3_ENABLED=false
+      - STORAGE_PATH=/app/recordings
+      # Retell AI handles all voice; no local AI stack needed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - answerflow
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Dashboard (React) — Development Overrides
+  # ---------------------------------------------------------------------------
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: ../infrastructure/docker/Dockerfile.dashboard
+      target: development
+    command: >
+      npm run dev --
+      --host 0.0.0.0
+      --port 5173
+    ports:
+      # Vite dev server
+      - "5173:5173"
+      # HMR (Hot Module Replacement) port
+      - "24678:24678"
+    volumes:
+      # Mount source code for HMR
+      - ./dashboard:/app:cached
+      # Named volume for node_modules (avoid conflicts with host OS)
+      - dashboard-node-modules:/app/node_modules
+      # Vite cache
+      - dashboard-vite-cache:/app/.vite
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000/ws
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - api
+    networks:
+      - answerflow
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker — Development Overrides
+  # ---------------------------------------------------------------------------
+  worker:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: worker
+    command: >
+      celery -A orchestrator.celery worker
+      --loglevel=debug
+      --concurrency=2
+      -Q calls,transcriptions,llm,tts,webhooks,notifications,default
+      --pool=prefork
+      --without-heartbeat
+      --without-gossip
+      --without-mingle
+    volumes:
+      - ./backend:/app:cached
+      - api-venv:/app/.venv
+      - ./models:/app/models:ro
+      - ./recordings:/app/recordings
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://answerflow:answerflow@postgres:5432/answerflow
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      # Retell AI handles all voice
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat — Development Overrides
+  # ---------------------------------------------------------------------------
+  beat:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: beat
+    volumes:
+      - ./backend:/app:cached
+      - api-venv:/app/.venv
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://answerflow:answerflow@postgres:5432/answerflow
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — Development Overrides
+  # ---------------------------------------------------------------------------
+  postgres:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: postgres
+    ports:
+      # Expose PostgreSQL for local development tools
+      - "5432:5432"
+    volumes:
+      # Named volume for data persistence
+      - postgres-data:/var/lib/postgresql/data
+      # Seed scripts
+      - ./backend/db/seeds:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_USER=answerflow
+      - POSTGRES_PASSWORD=answerflow
+      - POSTGRES_DB=answerflow
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+
+  # ---------------------------------------------------------------------------
+  # Redis — Development Overrides
+  # ---------------------------------------------------------------------------
+  redis:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: redis
+    ports:
+      # Expose Redis for local development tools
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # ---------------------------------------------------------------------------
+  # FreeSWITCH — Development Overrides
+  # ---------------------------------------------------------------------------
+  freeswitch:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: freeswitch
+    ports:
+      # ESL (event socket)
+      - "8021:8021"
+      # SIP signaling (UDP)
+      - "5060:5060/udp"
+      - "5060:5060"
+      # RTP media (range)
+      - "16384-16484:16384-16484/udp"
+      # Verto
+      - "8081:8081"
+      # XML-RPC
+      - "8080:8080"
+    volumes:
+      - freeswitch-conf:/etc/freeswitch
+      - freeswitch-recordings:/var/lib/freeswitch/recordings
+
+  # ---------------------------------------------------------------------------
+  # Whisper (STT) — Development Overrides
+  # ---------------------------------------------------------------------------
+  whisper:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: whisper
+    ports:
+      - "8001:8000"
+    volumes:
+      # Mount local model cache for faster startup
+      - ./models/whisper:/app/models:cached
+    environment:
+      - WHISPER_MODEL=base
+      - DEVICE=cpu
+      - LOG_LEVEL=DEBUG
+
+  # ---------------------------------------------------------------------------
+  # Piper (TTS) — Development Overrides
+  # ---------------------------------------------------------------------------
+  piper:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: piper
+    ports:
+      - "8002:8000"
+    volumes:
+      # Mount local voice models
+      - ./models/piper:/app/voices:cached
+    environment:
+      - PIPER_VOICE=en_US-lessac-medium
+      - LOG_LEVEL=DEBUG
+
+  # ---------------------------------------------------------------------------
+  # Nginx — Development Overrides (disabled by default)
+  # ---------------------------------------------------------------------------
+  nginx:
+    extends:
+      file: infrastructure/docker/docker-compose.yml
+      service: nginx
+    ports:
+      - "80:80"
+      # HTTPS (self-signed cert for local testing)
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+
+# ---------------------------------------------------------------------------
+# Named volumes for development
+# ---------------------------------------------------------------------------
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  api-venv:
+    driver: local
+  dashboard-node-modules:
+    driver: local
+  dashboard-vite-cache:
+    driver: local
+  freeswitch-conf:
+    driver: local
+  freeswitch-recordings:
+    driver: local
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+networks:
+  answerflow:
+    name: answerflow-dev
+    driver: bridge

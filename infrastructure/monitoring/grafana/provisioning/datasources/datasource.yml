@@ -1,0 +1,85 @@
+# ============================================================
+# Grafana Datasource Provisioning
+# ============================================================
+# Auto-configures Prometheus, Loki, and PostgreSQL datasources
+# on Grafana startup — no manual configuration needed.
+# ============================================================
+
+apiVersion: 1
+
+datasources:
+
+  # --------------------------------------------------------
+  # Prometheus — Metrics
+  # --------------------------------------------------------
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      cacheLevel: 'High'
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
+      alertmanagerUid: alertmanager
+    uid: prometheus
+
+  # --------------------------------------------------------
+  # Loki — Logs
+  # --------------------------------------------------------
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"trace_id":"(\w+)"'
+          url: '$$${__value.raw}'
+          urlDisplayLabel: Trace
+        - name: RequestID
+          matcherRegex: '"request_id":"([a-f0-9-]+)"'
+          url: '$$${__value.raw}'
+    uid: loki
+
+  # --------------------------------------------------------
+  # PostgreSQL — Business Data
+  # --------------------------------------------------------
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: ${POSTGRES_DB}
+    user: ${POSTGRES_USER}
+    isDefault: false
+    editable: false
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: false
+    uid: postgres
+
+  # --------------------------------------------------------
+  # Alertmanager
+  # --------------------------------------------------------
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    isDefault: false
+    editable: false
+    jsonData:
+      implementation: prometheus
+    uid: alertmanager

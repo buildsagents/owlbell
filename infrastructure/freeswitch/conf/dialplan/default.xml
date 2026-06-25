@@ -1,0 +1,54 @@
+; ============================================================
+; Owlbell — FreeSWITCH Dialplan
+; ============================================================
+; Routes inbound calls to the AI answering handler.
+; ============================================================
+
+[default]
+; ---- Inbound calls from SIP trunk ----
+; All inbound calls on registered DIDs go to the AI handler.
+; The destination number (DID) is used to resolve the tenant.
+
+exten => _X.,1,NoOp(Inbound call to ${destination_number} from ${caller_id_number})
+ same => n,Log(INFO,OWLBELL INBOUND: did=${destination_number} caller=${caller_id_number} name=${caller_id_name})
+ same => n,Set(tenant_id=${IREPLACE(${destination_number},^1,)})
+ same => n,Set(RECORD_TITLE=Owlbell ${caller_id_number} -> ${destination_number})
+ same => n,Answer()
+ same => n,Set(RINGBACK=${-ringback})
+ ; Start recording (with disclosure played by the AI handler)
+ same => n,Set(RECORD_STEREO=true)
+ same => n,Set(media_bug_answer_req=true)
+ same => n,Record(/var/lib/freeswitch/recordings/${strftime(%Y%m%d)}/${uuid}.wav,0,3600)
+ ; The actual AI conversation is handled via mod_audio_stream
+ ; which connects to the orchestrator WebSocket. The ESL call handler
+ ; triggers this after answering.
+ same => n,Hangup()
+
+; ---- Extension for operator transfer (DTMF 0) ----
+exten => 0,1,NoOp(Transfer to operator)
+ same => n,Set(operator_number=${ENV(OPERATOR_TRANSFER_NUMBER)})
+ same => n,Transfer(${operator_number} XML default)
+ same => n,Hangup()
+
+; ---- Test extension (for internal testing) ----
+exten => 999,1,NoOp(Test call — plays beep)
+ same => n,Answer()
+ same => n,Playback(silence_stream://500)
+ same => n,Playback(tone_stream://%(500,0,800))
+ same => n,Hangup()
+
+; ---- Voicemail (if AI handler unavailable) ----
+exten => voicemail,1,NoOp(Voicemail fallback)
+ same => n,Answer()
+ same => n,Playback(silence_stream://500)
+ same => n,VoiceMail(default@${tenant_id})
+ same => n,Hangup()
+
+; ============================================================
+; Public context (SIP trunk inbound)
+; ============================================================
+[public]
+; Inbound from SIP trunk — route to default context
+exten => _X.,1,NoOp(Public inbound: ${destination_number})
+ same => n,Transfer(${destination_number} XML default)
+ same => n,Hangup()

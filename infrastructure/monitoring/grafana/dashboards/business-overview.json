@@ -1,0 +1,506 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Business KPIs for Owlbell — customer usage, revenue proxy, satisfaction, billing metrics",
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "panels": [],
+      "title": "Key Business Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Total active customers",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "fixed", "fixedColor": "blue"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 1},
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM customers WHERE status = 'active' AND deleted_at IS NULL",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Customers",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Total phone numbers provisioned",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "fixed", "fixedColor": "purple"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 1},
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM phone_numbers WHERE status = 'active' AND deleted_at IS NULL",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Phone Numbers",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Total minutes processed today",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "fixed", "fixedColor": "green"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "m"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 1},
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(SUM(duration_seconds), 0) / 60.0 FROM calls WHERE started_at >= CURRENT_DATE AND deleted_at IS NULL",
+          "refId": "A"
+        }
+      ],
+      "title": "Minutes Today",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Customer satisfaction score (1-5 avg)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "max": 5,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 3},
+              {"color": "green", "value": 4}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 1},
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["mean"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(AVG(rating), 0) FROM call_feedback WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'",
+          "refId": "A"
+        }
+      ],
+      "title": "Avg CSAT (30d)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 5},
+      "id": 10,
+      "panels": [],
+      "title": "Usage Trends",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Daily call volume over time",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "calls",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "id": 11,
+      "options": {
+        "legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT DATE(started_at) AS time, COUNT(*) AS calls FROM calls WHERE started_at >= CURRENT_DATE - INTERVAL '30 days' AND deleted_at IS NULL GROUP BY DATE(started_at) ORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily Call Volume (30d)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Daily minutes consumed",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "minutes",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "unit": "m"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "id": 12,
+      "options": {
+        "legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT DATE(started_at) AS time, COALESCE(SUM(duration_seconds), 0) / 60.0 AS minutes FROM calls WHERE started_at >= CURRENT_DATE - INTERVAL '30 days' AND deleted_at IS NULL GROUP BY DATE(started_at) ORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily Minutes Consumed (30d)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 14},
+      "id": 20,
+      "panels": [],
+      "title": "Customer Health",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "New customers per day",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "customers",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "gradientMode": "hue",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 15},
+      "id": 21,
+      "options": {
+        "legend": {"calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT DATE(created_at) AS time, COUNT(*) AS new_customers FROM customers WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' AND deleted_at IS NULL GROUP BY DATE(created_at) ORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "New Customers (30d)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Top 10 customers by call volume",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "align": "auto",
+            "cellOptions": {"type": "auto"},
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "calls"}, "properties": [{"id": "custom.cellOptions", "value": {"mode": "basic", "type": "gauge"}}]},
+          {"matcher": {"id": "byName", "options": "minutes"}, "properties": [{"id": "unit", "value": "m"}]}
+        ]
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 15},
+      "id": 22,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {"countRows": false, "fields": "", "reducer": ["sum"], "show": false},
+        "showHeader": true,
+        "sortBy": [{"desc": true, "displayName": "calls"}]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT c.business_name AS customer, COUNT(ca.id) AS calls, COALESCE(SUM(ca.duration_seconds), 0) / 60.0 AS minutes FROM customers c LEFT JOIN calls ca ON ca.customer_id = c.id WHERE ca.started_at >= CURRENT_DATE - INTERVAL '30 days' AND c.deleted_at IS NULL GROUP BY c.id, c.business_name ORDER BY calls DESC LIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Customers by Volume",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 23},
+      "id": 30,
+      "panels": [],
+      "title": "Call Analytics",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Calls by hour of day (heatmap)",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}, "scaleDistribution": {"type": "linear"}},
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "id": 31,
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "color": {"exponent": 0.5, "fill": "dark-orange", "mode": "scheme", "reverse": false, "scale": "exponential", "scheme": "YlOrRd", "steps": 64},
+        "exemplars": {"color": "rgba(255,0,255,0.7)"},
+        "filterValues": {"le": 1e-9},
+        "legend": {"show": true},
+        "rowsFrame": {"layout": "auto"},
+        "tooltip": {"mode": "single", "showColorScale": false, "yHistogram": false}
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT EXTRACT(DOW FROM started_at)::int AS day, EXTRACT(HOUR FROM started_at)::int AS hour, COUNT(*) FROM calls WHERE started_at >= CURRENT_DATE - INTERVAL '7 days' AND deleted_at IS NULL GROUP BY day, hour ORDER BY day, hour",
+          "refId": "A"
+        }
+      ],
+      "title": "Call Volume Heatmap (Day x Hour)",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Call outcomes distribution",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 24},
+      "id": 32,
+      "options": {
+        "legend": {"displayMode": "list", "placement": "right", "showLegend": true},
+        "pieType": "donut",
+        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": true},
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT status, COUNT(*) FROM calls WHERE started_at >= CURRENT_DATE - INTERVAL '30 days' AND deleted_at IS NULL GROUP BY status",
+          "refId": "A"
+        }
+      ],
+      "title": "Call Outcomes",
+      "type": "piechart"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "${pg_datasource}"},
+      "description": "Most common caller intents",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 24},
+      "id": 33,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": true},
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT intent, COUNT(*) AS count FROM call_intents WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY intent ORDER BY count DESC LIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Caller Intents",
+      "type": "bargauge"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["answerflow", "business", "kpi"],
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": false, "text": "PostgreSQL", "value": "postgres"},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Business Data",
+        "multi": false,
+        "name": "pg_datasource",
+        "options": [],
+        "query": "postgres",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {"from": "now-30d", "to": "now"},
+  "timepicker": {
+    "refresh_intervals": ["5m", "15m", "30m", "1h"],
+    "time_options": ["1h", "6h", "12h", "24h", "7d", "30d", "90d"]
+  },
+  "timezone": "browser",
+  "title": "Owlbell — Business Overview",
+  "uid": "af-business-overview",
+  "version": 1,
+  "weekStart": ""
+}

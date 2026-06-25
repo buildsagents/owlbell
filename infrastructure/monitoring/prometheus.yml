@@ -1,0 +1,233 @@
+# ============================================================
+# Prometheus Configuration — Owlbell
+# ============================================================
+# File: infrastructure/monitoring/prometheus.yml
+# Scrape targets: all services with 15s interval
+# Recording rules: SLIs for availability, latency, errors
+# Alert rules: critical and warning thresholds
+# ============================================================
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: answerflow
+    replica: '{{.ExternalURL}}'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+      timeout: 10s
+      api_version: v2
+
+# Load rule files
+rule_files:
+  - 'alerts.yml'
+  - 'rules/*.yml'
+
+# Scrape configurations
+scrape_configs:
+
+  # --------------------------------------------------------
+  # Prometheus itself
+  # --------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+    metrics_path: /-/metrics
+
+  # --------------------------------------------------------
+  # Nginx Reverse Proxy
+  # --------------------------------------------------------
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']
+        labels:
+          service: nginx
+    scrape_interval: 15s
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Fallback: scrape nginx via HTTP health
+  - job_name: 'nginx-health'
+    static_configs:
+      - targets: ['nginx:80']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # FastAPI Application
+  # --------------------------------------------------------
+  - job_name: 'api'
+    static_configs:
+      - targets: ['api:9000']
+        labels:
+          service: api
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # WebSocket Server
+  # --------------------------------------------------------
+  - job_name: 'websocket'
+    static_configs:
+      - targets: ['websocket:9000']
+        labels:
+          service: websocket
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # FreeSWITCH
+  # --------------------------------------------------------
+  - job_name: 'freeswitch'
+    static_configs:
+      - targets: ['freeswitch:3222']
+        labels:
+          service: freeswitch
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Whisper STT
+  # --------------------------------------------------------
+  - job_name: 'whisper'
+    static_configs:
+      - targets: ['whisper:8080']
+        labels:
+          service: whisper
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Ollama LLM
+  # --------------------------------------------------------
+  - job_name: 'ollama'
+    static_configs:
+      - targets: ['ollama:11434']
+        labels:
+          service: ollama
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Piper TTS
+  # --------------------------------------------------------
+  - job_name: 'piper'
+    static_configs:
+      - targets: ['piper:5000']
+        labels:
+          service: piper
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Celery Workers
+  # --------------------------------------------------------
+  - job_name: 'celery-worker'
+    static_configs:
+      - targets: ['celery-worker:9000']
+        labels:
+          service: celery-worker
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Celery Beat
+  # --------------------------------------------------------
+  - job_name: 'celery-beat'
+    static_configs:
+      - targets: ['celery-beat:9000']
+        labels:
+          service: celery-beat
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Redis
+  # --------------------------------------------------------
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:9121']
+        labels:
+          service: redis
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Fallback: use redis exporter or simple check
+  - job_name: 'redis-direct'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 60s
+
+  # --------------------------------------------------------
+  # PostgreSQL
+  # --------------------------------------------------------
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:9187']
+        labels:
+          service: postgres
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # MinIO
+  # --------------------------------------------------------
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']
+        labels:
+          service: minio
+    scrape_interval: 30s
+    metrics_path: /minio/v2/metrics/cluster
+
+  # --------------------------------------------------------
+  # Grafana
+  # --------------------------------------------------------
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: grafana
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Loki
+  # --------------------------------------------------------
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+        labels:
+          service: loki
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Docker Daemon (cAdvisor)
+  # --------------------------------------------------------
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: container-metrics
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # --------------------------------------------------------
+  # Node Exporter (system metrics)
+  # --------------------------------------------------------
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: system-metrics
+    scrape_interval: 15s
+    metrics_path: /metrics

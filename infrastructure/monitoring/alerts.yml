@@ -1,0 +1,325 @@
+# ============================================================
+# Prometheus Alert Rules — Owlbell
+# ============================================================
+# Severity levels:
+#   critical — immediate action required (page/SMS)
+#   warning  — investigate soon (Slack/email)
+#   info     — awareness (dashboard only)
+# ============================================================
+
+groups:
+
+  # ----------------------------------------------------------
+  # Service Availability Alerts
+  # ----------------------------------------------------------
+  - name: service_availability
+    interval: 15s
+    rules:
+      # API down
+      - alert: APIServiceDown
+        expr: up{job="api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "API service is down"
+          description: "The FastAPI backend has been unreachable for more than 1 minute."
+          runbook_url: "https://wiki.owlbell.xyz/runbooks/api-down"
+
+      # WebSocket down
+      - alert: WebSocketServiceDown
+        expr: up{job="websocket"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: websocket
+        annotations:
+          summary: "WebSocket service is down"
+          description: "The WebSocket server has been unreachable for more than 1 minute."
+
+      # FreeSWITCH down
+      - alert: FreeSWITCHDown
+        expr: up{job="freeswitch"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: freeswitch
+        annotations:
+          summary: "FreeSWITCH is down"
+          description: "The telephony engine is unreachable. Calls cannot be processed."
+
+      # Ollama LLM down
+      - alert: OllamaDown
+        expr: up{job="ollama"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: ollama
+        annotations:
+          summary: "Ollama LLM service is down"
+          description: "AI responses are unavailable. Fallback mode may be active."
+
+      # Whisper STT down
+      - alert: WhisperDown
+        expr: up{job="whisper"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: whisper
+        annotations:
+          summary: "Whisper STT service is down"
+          description: "Speech-to-text is unavailable. Call transcription will fail."
+
+      # Piper TTS down
+      - alert: PiperDown
+        expr: up{job="piper"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: piper
+        annotations:
+          summary: "Piper TTS service is down"
+          description: "Text-to-speech is unavailable. Call audio generation will fail."
+
+      # Redis down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Cache and task queue are unavailable. API may be degraded."
+
+      # PostgreSQL down
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgres
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "The main database is unreachable. All data operations will fail."
+
+  # ----------------------------------------------------------
+  # High Error Rate Alerts
+  # ----------------------------------------------------------
+  - name: error_rates
+    interval: 15s
+    rules:
+      # API high error rate
+      - alert: APIHighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{service="api",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{service="api"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "API error rate is above 5%"
+          description: "The API 5xx error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      # API elevated 4xx rate
+      - alert: APIHigh4xxRate
+        expr: |
+          (
+            sum(rate(http_requests_total{service="api",status=~"4.."}[15m]))
+            /
+            sum(rate(http_requests_total{service="api"}[15m]))
+          ) > 0.25
+        for: 10m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API 4xx error rate is above 25%"
+          description: "Possible misconfiguration or abuse detected."
+
+  # ----------------------------------------------------------
+  # High Latency Alerts
+  # ----------------------------------------------------------
+  - name: latency
+    interval: 15s
+    rules:
+      # API P95 latency high
+      - alert: APIHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service="api"}[5m])) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API P95 latency is above 2 seconds"
+          description: "95th percentile response time is {{ $value }}s. Check database and AI service health."
+
+      # API P99 latency critical
+      - alert: APICriticalLatency
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service="api"}[5m])) > 5.0
+        for: 3m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "API P99 latency is above 5 seconds"
+          description: "99th percentile response time is {{ $value }}s. Immediate investigation required."
+
+      # LLM inference latency
+      - alert: OllamaHighLatency
+        expr: histogram_quantile(0.95, rate(llm_inference_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: ollama
+        annotations:
+          summary: "LLM inference P95 latency is above 30 seconds"
+          description: "AI response generation is slow. Consider model optimization."
+
+  # ----------------------------------------------------------
+  # Resource Usage Alerts
+  # ----------------------------------------------------------
+  - name: resource_usage
+    interval: 30s
+    rules:
+      # Disk full warning
+      - alert: DiskSpaceWarning
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space is below 15%"
+          description: "{{ $labels.device }} on {{ $labels.instance }} has {{ $value | humanizePercentage }} free space."
+
+      # Disk full critical
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space is below 5% — CRITICAL"
+          description: "{{ $labels.device }} on {{ $labels.instance }} has {{ $value | humanizePercentage }} free space. Immediate cleanup required."
+
+      # Memory warning
+      - alert: MemoryWarning
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Available memory is below 15%"
+          description: "{{ $labels.instance }} has {{ $value | humanizePercentage }} available memory."
+
+      # Memory critical
+      - alert: MemoryCritical
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Available memory is below 5% — CRITICAL"
+          description: "{{ $labels.instance }} is critically low on memory. OOM kills may occur."
+
+      # CPU high
+      - alert: CPUHighUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage is above 90%"
+          description: "{{ $labels.instance }} CPU usage has been above 90% for 10 minutes."
+
+  # ----------------------------------------------------------
+  # Call Quality Alerts
+  # ----------------------------------------------------------
+  - name: call_quality
+    interval: 15s
+    rules:
+      # High call drop rate
+      - alert: HighCallDropRate
+        expr: |
+          (
+            sum(rate(calls_ended_total{reason=~"error|timeout"}[10m]))
+            /
+            sum(rate(calls_ended_total[10m]))
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: freeswitch
+        annotations:
+          summary: "Call drop rate is above 10%"
+          description: "{{ $value | humanizePercentage }} of calls are ending with errors."
+
+      # Call queue backing up
+      - alert: CallQueueBacklog
+        expr: celery_tasks_active{queue="calls"} > 20
+        for: 5m
+        labels:
+          severity: warning
+          service: celery
+        annotations:
+          summary: "Call processing queue has >20 active tasks"
+          description: "Call queue backlog: {{ $value }} active tasks. Workers may be overloaded."
+
+  # ----------------------------------------------------------
+  # Security Alerts
+  # ----------------------------------------------------------
+  - name: security
+    interval: 60s
+    rules:
+      # Multiple failed logins
+      - alert: MultipleFailedLogins
+        expr: increase(auth_login_failed_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "Multiple failed login attempts detected"
+          description: "{{ $value }} failed logins in the last 5 minutes. Possible brute force attack."
+
+      # Rate limit triggered frequently
+      - alert: RateLimitTriggered
+        expr: increase(nginx_rate_limit_rejected_total[5m]) > 50
+        for: 5m
+        labels:
+          severity: info
+          service: nginx
+        annotations:
+          summary: "Rate limits are being triggered frequently"
+          description: "{{ $value }} rate limit rejections in 5 minutes. Check for abuse."
+
+  # ----------------------------------------------------------
+  # Backup Alerts
+  # ----------------------------------------------------------
+  - name: backup
+    interval: 300s
+    rules:
+      # Backup hasn't run recently
+      - alert: BackupNotRunning
+        expr: time() - backup_last_success_timestamp > 90000
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup has not run in over 25 hours"
+          description: "The last successful backup was {{ $value | humanizeDuration }} ago."
+
+      # Backup failed
+      - alert: BackupFailed
+        expr: backup_last_status != 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Latest backup failed"
+          description: "The backup process reported a failure. Check backup logs immediately."

@@ -1,0 +1,94 @@
+# ============================================================
+# Owlbell — Whisper.cpp STT Server Dockerfile
+# ============================================================
+# Architecture: ARM64 with NEON optimization, CUDA optional
+# Stages: builder (compile) → runtime (minimal)
+# Features: whisper.cpp server, model pre-download, health check
+# ============================================================
+
+# ------------------------------
+# Stage 1: Builder
+# ------------------------------
+FROM alpine:latest AS builder
+
+WORKDIR /whisper
+
+# Install build dependencies
+RUN apk add --no-cache \
+    build-base \
+    cmake \
+    git \
+    wget \
+    curl \
+    linux-headers
+
+# Clone and build whisper.cpp with ARM NEON optimizations
+RUN git clone https://github.com/ggerganov/whisper.cpp.git . \
+    && mkdir build && cd build \
+    && cmake .. \
+       -DWHISPER_BUILD_TESTS=OFF \
+       -DWHISPER_BUILD_EXAMPLES=ON \
+       -DWHISPER_OPTIMIZE_ARM=ON \
+       -DCMAKE_BUILD_TYPE=Release \
+       -DBUILD_SHARED_LIBS=OFF \
+       -DWHISPER_AVX=OFF \
+       -DWHISPER_AVX2=OFF \
+       -DWHISPER_FMA=OFF \
+       -DWHISPER_F16C=OFF \
+    && make -j$(nproc) whisper_server
+
+# Download default model (base.en for speed/accuracy balance)
+RUN mkdir -p /models \
+    && wget -q --show-progress \
+       https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin \
+       -O /models/ggml-base.en.bin \
+    && wget -q --show-progress \
+       https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin \
+       -O /models/ggml-small.en.bin 2>/dev/null || true
+
+# ------------------------------
+# Stage 2: Runtime
+# ------------------------------
+FROM alpine:latest
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    libstdc++ \
+    curl \
+    wget
+
+# Copy compiled binary from builder
+COPY --from=builder /whisper/build/bin/whisper-server /usr/local/bin/whisper-server
+COPY --from=builder /whisper/build/bin/quantize /usr/local/bin/whisper-quantize 2>/dev/null || true
+
+# Copy models
+COPY --from=builder /models /models
+
+# Default environment (overridable at runtime)
+ENV WHISPER_MODEL=/models/ggml-base.en.bin
+ENV WHISPER_HOST=0.0.0.0
+ENV WHISPER_PORT=8080
+ENV WHISPER_THREADS=4
+ENV WHISPER_CONVERT=1
+ENV WHISPER_DEBUG=0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
+
+EXPOSE 8080
+
+# Run whisper.cpp server
+CMD whisper-server \
+    --model ${WHISPER_MODEL} \
+    --host ${WHISPER_HOST} \
+    --port ${WHISPER_PORT} \
+    --threads ${WHISPER_THREADS} \
+    --convert ${WHISPER_CONVERT}
+
+LABEL org.opencontainers.image.title="Owlbell - Whisper STT"
+LABEL org.opencontainers.image.description="whisper.cpp speech-to-text server"
+LABEL org.opencontainers.image.vendor="Owlbell"
+LABEL org.opencontainers.image.source="https://github.com/answerflowai/answerflow"

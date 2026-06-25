@@ -1,0 +1,112 @@
+# ============================================================
+# Prometheus Recording Rules — Owlbell SLIs
+# ============================================================
+# Pre-computed metrics for dashboard performance
+# SLI definitions:
+#   - Availability: ratio of successful requests
+#   - Latency: p95 and p99 response times
+#   - Error rate: 5xx / total requests
+# ============================================================
+
+groups:
+
+  - name: slo_availability
+    interval: 30s
+    rules:
+      # API availability ratio (success / total)
+      - record: slo:api_availability:ratio5m
+        expr: |
+          sum(rate(http_requests_total{service="api",status!~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total{service="api"}[5m]))
+
+      - record: slo:api_availability:ratio1h
+        expr: |
+          sum(rate(http_requests_total{service="api",status!~"5.."}[1h]))
+          /
+          sum(rate(http_requests_total{service="api"}[1h]))
+
+      - record: slo:api_availability:ratio1d
+        expr: |
+          sum(rate(http_requests_total{service="api",status!~"5.."}[1d]))
+          /
+          sum(rate(http_requests_total{service="api"}[1d]))
+
+  - name: slo_latency
+    interval: 30s
+    rules:
+      # API P95 latency
+      - record: slo:api_latency_p95:seconds5m
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service="api"}[5m]))
+
+      # API P99 latency
+      - record: slo:api_latency_p99:seconds5m
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service="api"}[5m]))
+
+      # AI pipeline P95 latency (end-to-end)
+      - record: slo:ai_pipeline_latency_p95:seconds5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(call_processing_duration_seconds_bucket[5m])) by (le)
+          )
+
+  - name: slo_error_rate
+    interval: 30s
+    rules:
+      # API 5xx error rate
+      - record: slo:api_error_rate:ratio5m
+        expr: |
+          sum(rate(http_requests_total{service="api",status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total{service="api"}[5m]))
+
+      # API 4xx error rate
+      - record: slo:api_4xx_rate:ratio5m
+        expr: |
+          sum(rate(http_requests_total{service="api",status=~"4.."}[5m]))
+          /
+          sum(rate(http_requests_total{service="api"}[5m]))
+
+  - name: service_health
+    interval: 15s
+    rules:
+      # Service up percentage (for SLO dashboard)
+      - record: slo:service_up:percentage
+        expr: avg by (job) (up) * 100
+
+      # Call success rate
+      - record: slo:call_success_rate:ratio5m
+        expr: |
+          sum(rate(calls_answered_total[5m]))
+          /
+          sum(rate(calls_total[5m]))
+
+  - name: resource_usage
+    interval: 30s
+    rules:
+      # Container memory usage percentage
+      - record: container:memory_usage:percentage
+        expr: |
+          container_memory_usage_bytes{container!=""}
+          /
+          container_spec_memory_limit_bytes{container!=""} * 100
+
+      # Container CPU usage percentage
+      - record: container:cpu_usage:percentage
+        expr: |
+          rate(container_cpu_usage_seconds_total{container!=""}[5m]) * 100
+
+  - name: business_metrics
+    interval: 60s
+    rules:
+      # Calls per minute
+      - record: business:calls_per_minute
+        expr: sum(rate(calls_total[1m])) * 60
+
+      # Average call duration
+      - record: business:avg_call_duration:seconds
+        expr: avg(call_duration_seconds)
+
+      # Active calls
+      - record: business:active_calls
+        expr: sum(calls_active)

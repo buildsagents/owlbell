@@ -1,0 +1,229 @@
+# ============================================================
+# Promtail Configuration — Owlbell Log Shipper
+# ============================================================
+# File: infrastructure/monitoring/promtail.yml
+# Sources: Docker container logs, system logs, journald
+# Destination: Loki (http://loki:3100)
+# ============================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+  sync_period: 10s
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 1048576
+    timeout: 10s
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+    external_labels:
+      host: answerflow-server
+
+scrape_configs:
+
+  # ----------------------------------------------------------
+  # Docker Container Logs
+  # ----------------------------------------------------------
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/lib/docker/containers/*/*.log
+    pipeline_stages:
+      # Parse Docker JSON log format
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            attrs:
+      - json:
+          expressions:
+            tag:
+          source: attrs
+      - regex:
+          expression: (?P<container_name>(?:[^|])*[^|])
+          source: tag
+      - timestamp:
+          format: RFC3339Nano
+          source: time
+      - labels:
+          stream:
+          container_name:
+      - output:
+          source: output
+      # Drop empty lines
+      - drop:
+          source: output
+          expression: "^$"
+
+  # ----------------------------------------------------------
+  # Nginx Access Logs
+  # ----------------------------------------------------------
+  - job_name: nginx
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          service: nginx
+          __path__: /var/log/nginx/*.log
+    pipeline_stages:
+      - match:
+          selector: '{job="nginx"}'
+          stages:
+            - regex:
+                expression: '^(?P<remote_addr>[\w\.]+) - (?P<remote_user>[^ ]*) \[(?P<time_local>[^\]]*)\] "(?P<method>\S+) (?P<request>\S+) (?P<protocol>\S+)" (?P<status>\d{3}) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
+            - labels:
+                method:
+                status:
+                remote_addr:
+      - timestamp:
+          format: "02/Jan/2006:15:04:05 -0700"
+          source: time_local
+      # Drop health check noise
+      - match:
+          selector: '{job="nginx"} |~ "/health"'
+          action: drop
+
+  # ----------------------------------------------------------
+  # API Application Logs
+  # ----------------------------------------------------------
+  - job_name: api
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: api
+          service: api
+          __path__: /var/lib/docker/containers/af_api/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: log_level
+            msg: message
+            logger: logger_name
+      - labels:
+          level:
+      - output:
+          source: msg
+      # Drop debug logs in production
+      - match:
+          selector: '{job="api", level="DEBUG"}'
+          action: drop
+
+  # ----------------------------------------------------------
+  # FreeSWITCH Logs
+  # ----------------------------------------------------------
+  - job_name: freeswitch
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: freeswitch
+          service: freeswitch
+          __path__: /var/lib/docker/containers/af_freeswitch/*.log
+    pipeline_stages:
+      - regex:
+          expression: '^\[(?P<level>DEBUG|INFO|NOTICE|WARNING|ERR|CRIT|ALERT)\]\s+(?P<message>.*)'
+      - labels:
+          level:
+      - output:
+          source: message
+
+  # ----------------------------------------------------------
+  # System Logs
+  # ----------------------------------------------------------
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          service: system
+          __path__: /var/log/syslog
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>\S+)\s+(?P<service>\S+):\s+(?P<message>.*)$'
+      - labels:
+          service:
+      - timestamp:
+          format: "Jan 2 15:04:05"
+          source: timestamp
+      - output:
+          source: message
+
+  # ----------------------------------------------------------
+  # Auth Logs (security monitoring)
+  # ----------------------------------------------------------
+  - job_name: auth
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: auth
+          service: security
+          __path__: /var/log/auth.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>\S+)\s+(?P<service>\S+):\s+(?P<message>.*)$'
+      - labels:
+          service:
+      - timestamp:
+          format: "Jan 2 15:04:05"
+          source: timestamp
+      - output:
+          source: message
+
+  # ----------------------------------------------------------
+  # Celery Worker Logs
+  # ----------------------------------------------------------
+  - job_name: celery-worker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: celery-worker
+          service: celery-worker
+          __path__: /var/lib/docker/containers/af_celery_worker/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: log_level
+            task: task_name
+            message: message
+      - labels:
+          level:
+          task:
+      - output:
+          source: message
+
+  # ----------------------------------------------------------
+  # Celery Beat Logs
+  # ----------------------------------------------------------
+  - job_name: celery-beat
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: celery-beat
+          service: celery-beat
+          __path__: /var/lib/docker/containers/af_celery_beat/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: log_level
+            message: message
+      - labels:
+          level:
+      - output:
+          source: message

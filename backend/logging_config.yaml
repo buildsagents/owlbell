@@ -1,0 +1,349 @@
+# =============================================================================
+# Owlbell — Structured Logging Configuration
+# =============================================================================
+# This file configures Python's logging module with:
+# - JSON format for production (machine-parseable)
+# - Pretty format for development (human-readable)
+# - Log rotation by size
+# - Per-module log levels
+# - Request correlation IDs
+#
+# Usage:
+#   import logging.config, yaml
+#   with open("logging_config.yaml") as f:
+#       logging.config.dictConfig(yaml.safe_load(f))
+# =============================================================================
+
+version: 1
+disable_existing_loggers: false
+
+# ---------------------------------------------------------------------------
+# Formatters
+# ---------------------------------------------------------------------------
+formatters:
+  # Pretty console output for development
+  pretty:
+    format: "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+  # Colored pretty output (requires colorama or coloredlogs)
+  colored:
+    format: "%(asctime)s | %(log_color)s%(levelname)-8s%(reset)s | %(bold)s%(name)s%(reset)s:%(funcName)s:%(lineno)d | %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    (): "colorlog.ColoredFormatter"
+    log_colors:
+      DEBUG: "cyan"
+      INFO: "green"
+      WARNING: "yellow"
+      ERROR: "red"
+      CRITICAL: "bold_red"
+
+  # JSON format for production (structured, machine-parseable)
+  json:
+    (): "pythonjsonlogger.json.JsonFormatter"
+    format: "%(asctime)s %(levelname)s %(name)s %(funcName)s %(lineno)d %(message)s %(correlation_id)s %(request_id)s %(user_id)s %(duration_ms)s"
+    rename_fields:
+      asctime: "timestamp"
+      levelname: "level"
+      funcName: "function"
+      lineno: "line"
+    datefmt: "%Y-%m-%dT%H:%M:%S%z"
+
+  # Minimal format for access logs
+  access:
+    format: "%(asctime)s | %(levelname)-8s | %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+# ---------------------------------------------------------------------------
+# Filters
+# ---------------------------------------------------------------------------
+filters:
+  # Only allow INFO and above (for less verbose output)
+  info_and_above:
+    (): "logging.Filter"
+    name: ""
+
+# ---------------------------------------------------------------------------
+# Handlers
+# ---------------------------------------------------------------------------
+handlers:
+  # Console handler — uses pretty format for dev, JSON for production
+  console:
+    class: "logging.StreamHandler"
+    level: "DEBUG"
+    formatter: "pretty"
+    stream: "ext://sys.stdout"
+
+  # Colored console for development terminals
+  console_colored:
+    class: "logging.StreamHandler"
+    level: "DEBUG"
+    formatter: "colored"
+    stream: "ext://sys.stdout"
+
+  # JSON console for production / log aggregation (ELK, Datadog, etc.)
+  console_json:
+    class: "logging.StreamHandler"
+    level: "INFO"
+    formatter: "json"
+    stream: "ext://sys.stdout"
+
+  # Application log file with rotation
+  file_app:
+    class: "logging.handlers.RotatingFileHandler"
+    level: "INFO"
+    formatter: "json"
+    filename: "logs/app.log"
+    maxBytes: 10485760   # 10 MB
+    backupCount: 10
+    encoding: "utf-8"
+
+  # Error log file (only ERROR and above)
+  file_error:
+    class: "logging.handlers.RotatingFileHandler"
+    level: "ERROR"
+    formatter: "json"
+    filename: "logs/error.log"
+    maxBytes: 10485760   # 10 MB
+    backupCount: 20
+    encoding: "utf-8"
+
+  # Access log file
+  file_access:
+    class: "logging.handlers.RotatingFileHandler"
+    level: "INFO"
+    formatter: "access"
+    filename: "logs/access.log"
+    maxBytes: 5242880    # 5 MB
+    backupCount: 5
+    encoding: "utf-8"
+
+  # Audit log file (security-relevant events)
+  file_audit:
+    class: "logging.handlers.RotatingFileHandler"
+    level: "INFO"
+    formatter: "json"
+    filename: "logs/audit.log"
+    maxBytes: 10485760   # 10 MB
+    backupCount: 30
+    encoding: "utf-8"
+
+  # Debug log file (captures everything for troubleshooting)
+  file_debug:
+    class: "logging.handlers.RotatingFileHandler"
+    level: "DEBUG"
+    formatter: "json"
+    filename: "logs/debug.log"
+    maxBytes: 20971520   # 20 MB
+    backupCount: 3
+    encoding: "utf-8"
+
+  # Null handler (for silencing unwanted logs)
+  null:
+    class: "logging.NullHandler"
+
+# ---------------------------------------------------------------------------
+# Loggers (per-module configuration)
+# ---------------------------------------------------------------------------
+loggers:
+  # Root logger
+  "":
+    level: "INFO"
+    handlers:
+      - console
+    propagate: false
+
+  # --- Application modules ---
+
+  backend:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+      - file_error
+    propagate: false
+
+  backend.api:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+      - file_access
+    propagate: false
+
+  backend.business:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  backend.integrations:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  backend.telephony:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  backend.orchestrator:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  # --- AI Pipeline ---
+
+  backend.ai:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  backend.ai.stt:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  backend.ai.llm:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  backend.ai.tts:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  # --- Security & Audit ---
+
+  backend.security:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+      - file_audit
+    propagate: false
+
+  backend.auth:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+      - file_audit
+    propagate: false
+
+  # --- Database ---
+
+  backend.db:
+    level: "WARNING"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  sqlalchemy:
+    level: "WARNING"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  sqlalchemy.engine:
+    level: "WARNING"
+    handlers:
+      - console
+    propagate: false
+
+  # --- Celery ---
+
+  celery:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  celery.task:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  # --- Third-party libraries ---
+
+  uvicorn:
+    level: "INFO"
+    handlers:
+      - console
+      - file_access
+    propagate: false
+
+  uvicorn.access:
+    level: "INFO"
+    handlers:
+      - console
+      - file_access
+    propagate: false
+
+  uvicorn.error:
+    level: "WARNING"
+    handlers:
+      - console
+      - file_error
+    propagate: false
+
+  fastapi:
+    level: "INFO"
+    handlers:
+      - console
+      - file_app
+    propagate: false
+
+  httpx:
+    level: "WARNING"
+    handlers:
+      - console
+    propagate: false
+
+  aiohttp:
+    level: "WARNING"
+    handlers:
+      - console
+    propagate: false
+
+  redis:
+    level: "WARNING"
+    handlers:
+      - console
+    propagate: false
+
+  websockets:
+    level: "INFO"
+    handlers:
+      - console
+    propagate: false
+
+# ---------------------------------------------------------------------------
+# Root logger configuration
+# ---------------------------------------------------------------------------
+root:
+  level: "WARNING"
+  handlers:
+    - console
+    - file_error

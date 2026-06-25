@@ -1,0 +1,979 @@
+# ============================================================
+# Owlbell — Docker Compose Production Configuration
+# ============================================================
+# File: infrastructure/docker/docker-compose.yml
+# Version: 1.0
+# Purpose: Production deployment for Oracle Cloud Always Free ARM64
+# Services: 19 (nginx, api, websocket, dashboard, freeswitch,
+#                whisper, ollama, piper, celery-worker, celery-beat,
+#                redis, postgres, minio, prometheus, grafana,
+#                loki, promtail, alertmanager, backup)
+# Networks: af_network (public), af_internal (service mesh)
+# ============================================================
+
+version: "3.8"
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  af_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    labels:
+      - "com.answerflow.network=public"
+  af_internal:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+    labels:
+      - "com.answerflow.network=internal"
+
+# ============================================================
+# Volumes
+# ============================================================
+volumes:
+  postgres_data:
+    driver: local
+    labels:
+      - "com.answerflow.volume=postgres"
+  redis_data:
+    driver: local
+    labels:
+      - "com.answerflow.volume=redis"
+  minio_data:
+    driver: local
+    labels:
+      - "com.answerflow.volume=minio"
+  prometheus_data:
+    driver: local
+    labels:
+      - "com.answerflow.volume=prometheus"
+  grafana_data:
+    driver: local
+    labels:
+      - "com.answerflow.volume=grafana"
+  loki_data:
+    driver: local
+    labels:
+      - "com.answerflow.volume=loki"
+  freeswitch_sounds:
+    driver: local
+    labels:
+      - "com.answerflow.volume=freeswitch-sounds"
+  freeswitch_recordings:
+    driver: local
+    labels:
+      - "com.answerflow.volume=freeswitch-recordings"
+  letsencrypt:
+    driver: local
+    labels:
+      - "com.answerflow.volume=letsencrypt"
+  ollama_models:
+    driver: local
+    labels:
+      - "com.answerflow.volume=ollama"
+  whisper_models:
+    driver: local
+    labels:
+      - "com.answerflow.volume=whisper"
+  dashboard_static:
+    driver: local
+    labels:
+      - "com.answerflow.volume=dashboard"
+
+# ============================================================
+# Services
+# ============================================================
+services:
+
+  # ----------------------------------------------------------
+  # 1. Nginx — Reverse Proxy & SSL Termination
+  # ----------------------------------------------------------
+  nginx:
+    image: ghcr.io/answerflowai/nginx:${GIT_SHA:-latest}
+    build:
+      context: ../../services/nginx
+      dockerfile: Dockerfile
+    container_name: af_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "5061:5061/tcp"
+      - "5080:5080/udp"
+      - "16384-16484:16384-16484/udp"
+    networks:
+      - af_network
+    volumes:
+      - letsencrypt:/etc/letsencrypt:ro
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/conf.d:/etc/nginx/conf.d:ro
+      - dashboard_static:/usr/share/nginx/html/dashboard:ro
+    environment:
+      - NGINX_HOST=${DOMAIN:-localhost}
+      - NGINX_PORT=80
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - api
+      - websocket
+      - grafana
+      - minio
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "nginx"
+
+  # ----------------------------------------------------------
+  # 2. API — FastAPI Application
+  # ----------------------------------------------------------
+  api:
+    image: ghcr.io/answerflowai/api:${GIT_SHA:-latest}
+    build:
+      context: ../../services/api
+      dockerfile: Dockerfile
+      target: production
+    container_name: af_api
+    restart: unless-stopped
+    expose:
+      - "8000"
+    networks:
+      - af_network
+      - af_internal
+    volumes:
+      - freeswitch_recordings:/recordings:ro
+    environment:
+      # Database
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_POOL_SIZE=20
+      - DATABASE_MAX_OVERFLOW=10
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_QUEUE_URL=redis://redis:6379/1
+      # MinIO
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME:-answerflow}
+      - MINIO_USE_SSL=false
+      # AI Services
+      - WHISPER_URL=http://whisper:8080
+      - OLLAMA_URL=http://ollama:11434
+      - PIPER_URL=http://piper:5000
+      # FreeSWITCH
+      - FREESWITCH_ESL_HOST=freeswitch
+      - FREESWITCH_ESL_PORT=8021
+      - FREESWITCH_ESL_PASSWORD=${FREESWITCH_ESL_PASSWORD}
+      # App
+      - APP_ENV=production
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+      - APP_DEBUG=false
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=https://${DOMAIN}
+      # JWT
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+      # Celery
+      - CELERY_BROKER_URL=redis://redis:6379/2
+      - CELERY_RESULT_BACKEND=redis://redis:6379/3
+      # Monitoring
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
+      - METRICS_PORT=9000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service_name"
+      labels:
+        service_name: "api"
+
+  # ----------------------------------------------------------
+  # 3. WebSocket — FastAPI WebSocket Server
+  # ----------------------------------------------------------
+  websocket:
+    image: ghcr.io/answerflowai/websocket:${GIT_SHA:-latest}
+    build:
+      context: ../../services/websocket
+      dockerfile: Dockerfile
+      target: production
+    container_name: af_websocket
+    restart: unless-stopped
+    expose:
+      - "8001"
+    networks:
+      - af_network
+      - af_internal
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+      - CORS_ORIGINS=https://${DOMAIN}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - LOG_LEVEL=INFO
+      - METRICS_PORT=9000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service_name"
+      labels:
+        service_name: "websocket"
+
+  # ----------------------------------------------------------
+  # 4. Dashboard — React Static Files
+  # ----------------------------------------------------------
+  dashboard:
+    image: ghcr.io/answerflowai/dashboard:${GIT_SHA:-latest}
+    build:
+      context: ../../services/dashboard
+      dockerfile: Dockerfile
+      target: production
+    container_name: af_dashboard
+    restart: "no"
+    volumes:
+      - dashboard_static:/usr/share/nginx/html/dashboard
+    networks:
+      - af_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 64M
+    profiles: ["setup"]
+
+  # ----------------------------------------------------------
+  # 5. FreeSWITCH — SIP/RTP Telephony Engine
+  # ----------------------------------------------------------
+  freeswitch:
+    image: ghcr.io/answerflowai/freeswitch:${GIT_SHA:-latest}
+    build:
+      context: ../../services/freeswitch
+      dockerfile: Dockerfile
+    container_name: af_freeswitch
+    restart: unless-stopped
+    expose:
+      - "8021"
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "5061:5061/tcp"
+      - "5080:5080/udp"
+      - "16384-16484:16384-16484/udp"
+    networks:
+      - af_network
+      - af_internal
+    volumes:
+      - freeswitch_sounds:/usr/share/freeswitch/sounds
+      - freeswitch_recordings:/var/lib/freeswitch/recordings
+      - ../freeswitch/conf:/etc/freeswitch:ro
+    environment:
+      - FREESWITCH_ESL_PASSWORD=${FREESWITCH_ESL_PASSWORD}
+      - API_CALLBACK_URL=http://api:8000/v1/calls/events
+      - WHISPER_URL=http://whisper:8080
+      - PIPER_URL=http://piper:5000
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "fs_cli", "-x", "sofia status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+        labels: "service_name"
+      labels:
+        service_name: "freeswitch"
+
+  # ----------------------------------------------------------
+  # 6. Whisper — Speech-to-Text (whisper.cpp server)
+  # ----------------------------------------------------------
+  whisper:
+    image: ghcr.io/answerflowai/whisper:${GIT_SHA:-latest}
+    build:
+      context: ../../services/whisper
+      dockerfile: Dockerfile
+    container_name: af_whisper
+    restart: unless-stopped
+    expose:
+      - "8080"
+    networks:
+      - af_internal
+    volumes:
+      - whisper_models:/models:ro
+    environment:
+      - WHISPER_MODEL=/models/ggml-base.en.bin
+      - WHISPER_THREADS=4
+      - WHISPER_HOST=0.0.0.0
+      - WHISPER_PORT=8080
+      - WHISPER_CONVERT=true
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "whisper"
+
+  # ----------------------------------------------------------
+  # 7. Ollama — LLM Inference Server
+  # ----------------------------------------------------------
+  ollama:
+    image: ghcr.io/answerflowai/ollama:${GIT_SHA:-latest}
+    build:
+      context: ../../services/ollama
+      dockerfile: Dockerfile
+    container_name: af_ollama
+    restart: unless-stopped
+    expose:
+      - "11434"
+    networks:
+      - af_internal
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_MODELS=/root/.ollama/models
+      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_NUM_PARALLEL=2
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 4G
+        reservations:
+          cpus: "0.50"
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "ollama"
+
+  # ----------------------------------------------------------
+  # 8. Piper — Text-to-Speech Server
+  # ----------------------------------------------------------
+  piper:
+    image: ghcr.io/answerflowai/piper:${GIT_SHA:-latest}
+    build:
+      context: ../../services/piper
+      dockerfile: Dockerfile
+    container_name: af_piper
+    restart: unless-stopped
+    expose:
+      - "5000"
+    networks:
+      - af_internal
+    environment:
+      - PIPER_MODEL=/models/en_US-lessac-medium.onnx
+      - PIPER_CONFIG=/models/en_US-lessac-medium.onnx.json
+      - PIPER_PORT=5000
+      - PIPER_THREADS=4
+      - PIPER_LENGTH_SCALE=1.0
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "piper"
+
+  # ----------------------------------------------------------
+  # 9. Celery Worker — Background Task Processing
+  # ----------------------------------------------------------
+  celery-worker:
+    image: ghcr.io/answerflowai/api:${GIT_SHA:-latest}
+    container_name: af_celery_worker
+    restart: unless-stopped
+    command: >
+      celery -A app.celery_app worker
+      -l INFO
+      -c 4
+      -Q default,calls,notifications,ai_tasks
+      -n worker@%h
+    networks:
+      - af_internal
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/2
+      - CELERY_RESULT_BACKEND=redis://redis:6379/3
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - WHISPER_URL=http://whisper:8080
+      - OLLAMA_URL=http://ollama:11434
+      - PIPER_URL=http://piper:5000
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.celery_app", "inspect", "ping"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+        labels: "service_name"
+      labels:
+        service_name: "celery-worker"
+
+  # ----------------------------------------------------------
+  # 10. Celery Beat — Scheduled Task Runner
+  # ----------------------------------------------------------
+  celery-beat:
+    image: ghcr.io/answerflowai/api:${GIT_SHA:-latest}
+    container_name: af_celery_beat
+    restart: unless-stopped
+    command: >
+      celery -A app.celery_app beat
+      -l INFO
+      -s /tmp/celerybeat-schedule
+      --pidfile /tmp/celerybeat.pid
+    networks:
+      - af_internal
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/2
+      - CELERY_RESULT_BACKEND=redis://redis:6379/3
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "celery beat"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 128M
+        reservations:
+          cpus: "0.05"
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "celery-beat"
+
+  # ----------------------------------------------------------
+  # 11. Redis — Cache + Queue + Pub/Sub
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: af_redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    networks:
+      - af_internal
+    volumes:
+      - redis_data:/data
+      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "redis"
+
+  # ----------------------------------------------------------
+  # 12. PostgreSQL — Main Database
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: af_postgres
+    restart: unless-stopped
+    expose:
+      - "5432"
+    networks:
+      - af_internal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+      - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    command: >
+      postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+        labels: "service_name"
+      labels:
+        service_name: "postgres"
+
+  # ----------------------------------------------------------
+  # 13. MinIO — S3-Compatible Object Storage
+  # ----------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: af_minio
+    restart: unless-stopped
+    expose:
+      - "9000"
+      - "9001"
+    networks:
+      - af_network
+      - af_internal
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+      - MINIO_BROWSER=on
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "minio"
+
+  # ----------------------------------------------------------
+  # 14. Prometheus — Metrics Collection
+  # ----------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: af_prometheus
+    restart: unless-stopped
+    expose:
+      - "9090"
+    networks:
+      - af_network
+      - af_internal
+    volumes:
+      - prometheus_data:/prometheus
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ../monitoring/rules:/etc/prometheus/rules:ro
+    environment:
+      - PROMETHEUS_STORAGE_TSDB_RETENTION_TIME=15d
+      - PROMETHEUS_STORAGE_TSDB_RETENTION_SIZE=5GB
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--storage.tsdb.retention.size=5GB"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "prometheus"
+
+  # ----------------------------------------------------------
+  # 15. Grafana — Dashboards & Visualization
+  # ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: af_grafana
+    restart: unless-stopped
+    expose:
+      - "3000"
+    networks:
+      - af_network
+      - af_internal
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://${DOMAIN}/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "grafana"
+
+  # ----------------------------------------------------------
+  # 16. Loki — Log Aggregation
+  # ----------------------------------------------------------
+  loki:
+    image: grafana/loki:latest
+    container_name: af_loki
+    restart: unless-stopped
+    expose:
+      - "3100"
+    networks:
+      - af_network
+      - af_internal
+    volumes:
+      - loki_data:/loki
+      - ../monitoring/loki.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "loki"
+
+  # ----------------------------------------------------------
+  # 17. Promtail — Log Shipping Agent
+  # ----------------------------------------------------------
+  promtail:
+    image: grafana/promtail:latest
+    container_name: af_promtail
+    restart: unless-stopped
+    networks:
+      - af_internal
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - ../monitoring/promtail.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      loki:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "promtail"
+
+  # ----------------------------------------------------------
+  # 18. Alertmanager — Alert Routing
+  # ----------------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: af_alertmanager
+    restart: unless-stopped
+    expose:
+      - "9093"
+    networks:
+      - af_network
+      - af_internal
+    volumes:
+      - ../monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ../monitoring/alertmanager-templates:/etc/alertmanager/templates:ro
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.external-url=https://${DOMAIN}/alertmanager"
+      - "--web.route-prefix=/"
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 128M
+        reservations:
+          cpus: "0.05"
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "alertmanager"
+
+  # ----------------------------------------------------------
+  # 19. Backup Service — Automated Database Backups
+  # ----------------------------------------------------------
+  backup:
+    image: offen/docker-volume-backup:latest
+    container_name: af_backup
+    restart: unless-stopped
+    networks:
+      - af_internal
+    volumes:
+      - postgres_data:/backup/postgres:ro
+      - redis_data:/backup/redis:ro
+      - minio_data:/backup/minio:ro
+      - ../backup:/etc/dockervolumebackup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - BACKUP_CRON_EXPRESSION=0 3 * * *
+      - BACKUP_RETENTION_DAYS=30
+      - BACKUP_FILENAME=answerflow-backup-%Y%m%dT%H%M%S.tar.gz
+      - BACKUP_ARCHIVE=/archive
+      - BACKUP_STOP_CONTAINER_LABEL=answerflow.stop-during-backup=true
+      - AWS_S3_BUCKET_NAME=${BACKUP_S3_BUCKET:-}
+      - AWS_ACCESS_KEY_ID=${BACKUP_ACCESS_KEY:-}
+      - AWS_SECRET_ACCESS_KEY=${BACKUP_SECRET_KEY:-}
+      - AWS_S3_ENDPOINT=${BACKUP_S3_ENDPOINT:-}
+      - NOTIFICATION_URLS=${BACKUP_NOTIFICATION_URL:-}
+      - NOTIFICATION_LEVEL=error
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+        labels: "service_name"
+      labels:
+        service_name: "backup"

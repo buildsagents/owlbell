@@ -1,0 +1,75 @@
+# ============================================================
+# Owlbell — API Backend (Minimal Production)
+# ============================================================
+# Usage: docker compose -f docker-compose.api.yml up -d --build
+# ============================================================
+
+version: "3.8"
+
+services:
+  # ----------------------------------------------------------
+  # API — FastAPI Application
+  # ----------------------------------------------------------
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: owlbell-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - LOG_LEVEL=INFO
+      - INTEGRATION_TWILIO_ACCOUNT_SID=${INTEGRATION_TWILIO_ACCOUNT_SID}
+      - INTEGRATION_TWILIO_AUTH_TOKEN=${INTEGRATION_TWILIO_AUTH_TOKEN}
+      - INTEGRATION_TWILIO_SIP_TRUNK_TERMINATION_URI=${INTEGRATION_TWILIO_SIP_TRUNK_TERMINATION_URI}
+      - INTEGRATION_RETELL_API_KEY=${INTEGRATION_RETELL_API_KEY}
+      - INTEGRATION_RETELL_WEBHOOK_SECRET=${INTEGRATION_RETELL_WEBHOOK_SECRET}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ----------------------------------------------------------
+  # Redis — Cache + Queue
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: owlbell-redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+
+volumes:
+  redis_data:

@@ -1,0 +1,38 @@
+; ============================================================
+; Owlbell — FreeSWITCH vars.xml
+; ============================================================
+; Global variables used across configs.
+; ============================================================
+
+<include>
+  <!-- Network -->
+  <X-PRE-PROCESS cmd="set" data="local_ip_v4=$${local_ip_v4}"/>
+  <X-PRE-PROCESS cmd="set" data="external_rtp_ip=stun:stun.freeswitch.org"/>
+  <X-PRE-PROCESS cmd="set" data="external_sip_ip=stun:stun.freeswitch.org"/>
+
+  <!-- SIP Ports -->
+  <X-PRE-PROCESS cmd="set" data="sip_port=5060"/>
+  <X-PRE-PROCESS cmd="set" data="sip_tls_port=5061"/>
+
+  <!-- ESL Password (from environment) -->
+  <X-PRE-PROCESS cmd="set" data="FREESWITCH_ESL_PASSWORD=ClueCon"/>
+
+  <!-- SIP Trunk Credentials (from environment) -->
+  <X-PRE-PROCESS cmd="set" data="TELNYX_SIP_USERNAME=CHANGE_ME"/>
+  <X-PRE-PROCESS cmd="set" data="TELNYX_SIP_PASSWORD=CHANGE_ME"/>
+
+  <!-- Operator transfer number -->
+  <X-PRE-PROCESS cmd="set" data="OPERATOR_TRANSFER_NUMBER=CHANGE_ME"/>
+
+  <!-- Sounds directory -->
+  <X-PRE-PROCESS cmd="set" data="sounds_dir=/usr/share/freeswitch/sounds"/>
+
+  <!-- Recordings -->
+  <X-PRE-PROCESS cmd="set" data="recordings_dir=/var/lib/freeswitch/recordings"/>
+
+  <!-- Default context -->
+  <X-PRE-PROCESS cmd="set" data="default_context=public"/>
+
+  <!-- Ringback -->
+  <X-PRE-PROCESS cmd="set" data="ringback=%(2000,4000,440.0,480.0)"/>
+</include>

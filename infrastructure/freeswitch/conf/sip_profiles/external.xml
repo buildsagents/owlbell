@@ -1,0 +1,113 @@
+; ============================================================
+; Owlbell — FreeSWITCH SIP Profile (External)
+; ============================================================
+; Receives inbound calls from SIP trunk (Telnyx/Twilio).
+; ============================================================
+
+<profile name="external">
+  <settings>
+    <!-- Basics -->
+    <param name="rtp-ip" value="$${local_ip_v4}"/>
+    <param name="sip-ip" value="$${local_ip_v4}"/>
+    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
+    <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+    <param name="sip-port" value="$${sip_port}"/>
+    <param name="rtp-timeout-sec" value="300"/>
+    <param name="rtp-hold-timeout-sec" value="1800"/>
+
+    <!-- NAT -->
+    <param name="aggressive-nat-detection" value="true"/>
+    <param name="apply-nat-acl" value="nat.auto"/>
+
+    <!-- DTMF -->
+    <param name="dtmf-type" value="rfc2833"/>
+    <param name="rfc2833-pt" value="101"/>
+    <param name="dtmf-duration" value="2000"/>
+
+    <!-- Codec -->
+    <param name="inbound-codec-prefs" value="PCMU,PCMA,opus,G722"/>
+    <param name="outbound-codec-prefs" value="PCMU,PCMA,opus,G722"/>
+    <param name="codec-prefs" value="PCMU,PCMA,opus,G722"/>
+
+    <!-- SIP features -->
+    <param name="enable-3pcc" value="false"/>
+    <param name="enable-timer" value="false"/>
+    <param name="minimum-session-expires" value="120"/>
+    <param name="session-timeout" value="1800"/>
+    <param name="multiple-registrations" value="contact"/>
+    <param name="unnegotiated-codecs" value="false"/>
+    <param name="sip-trace" value="no"/>
+    <param name="debug" value="0"/>
+
+    <!-- TLS (optional — enable if SIP trunk requires TLS) -->
+    <!--
+    <param name="tls" value="true"/>
+    <param name="tls-only" value="false"/>
+    <param name="tls-bind-params" value="transport=tls"/>
+    <param name="tls-sip-port" value="5061"/>
+    <param name="tls-cert-dir" value="$${certs_dir}"/>
+    <param name="tls-passphrase" value=""/>
+    <param name="tls-verify-date" value="true"/>
+    <param name="tls-verify-policy" value="none"/>
+    -->
+
+    <!-- Context: inbound calls go to [public] context -->
+    <param name="context" value="public"/>
+
+    <!-- Authentication: accept calls from registered gateways -->
+    <param name="auth-calls" value="false"/>
+
+    <!-- Recording -->
+    <param name="record-path" value="/var/lib/freeswitch/recordings"/>
+    <param name="record-template" value="${strftime(%Y%m%d)}/${uuid}.wav"/>
+
+    <!-- VAD (Voice Activity Detection) -->
+    <param name="vad" value="false"/>
+
+    <!-- Enable WebSocket for mod_audio_stream -->
+    <param name="ws-binding" value=":5066"/>
+    <param name="wss-binding" value=":7443"/>
+  </settings>
+
+  <!-- SIP Gateways (SIP trunk providers) -->
+  <gateways>
+    <!--
+      Telnyx SIP Trunk
+      Get credentials from https://portal.telnyx.com/#/app/sip-trunks
+      Replace TELNYX_* with your actual values in .env
+    -->
+    <gateway name="telnyx">
+      <param name="proxy" value="sip.telnyx.com:5060"/>
+      <param name="register" value="true"/>
+      <param name="register-proxy" value="sip.telnyx.com:5060"/>
+      <param name="expire-seconds" value="3600"/>
+      <param name="retry-seconds" value="30"/>
+      <param name="context" value="public"/>
+      <param name="username" value="$${TELNYX_SIP_USERNAME}"/>
+      <param name="password" value="$${TELNYX_SIP_PASSWORD}"/>
+      <param name="from-user" value="$${TELNYX_SIP_USERNAME}"/>
+      <param name="from-domain" value="sip.telnyx.com"/>
+      <param name="caller-id-in-from" value="true"/>
+    </gateway>
+
+    <!--
+      Twilio SIP Trunk (alternative)
+      Get credentials from https://www.twilio.com/console/voice/sip/trunks
+    -->
+    <!--
+    <gateway name="twilio">
+      <param name="proxy" value="YOUR_TRUNK_PJSIP_DOMAIN"/>
+      <param name="register" value="false"/>
+      <param name="context" value="public"/>
+      <param name="username" value="$${TWILIO_SIP_USERNAME}"/>
+      <param name="password" value="$${TWILIO_SIP_PASSWORD}"/>
+      <param name="from-user" value="$${TWILIO_SIP_USERNAME}"/>
+    </gateway>
+    -->
+  </gateways>
+
+  <!-- Inbound ACLs -->
+  <domains>
+    <domain name="all" alias="false" parse="true"/>
+  </domains>
+</profile>

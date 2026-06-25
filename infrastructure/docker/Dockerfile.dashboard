@@ -1,0 +1,65 @@
+# ============================================================
+# Owlbell — React Dashboard Dockerfile
+# ============================================================
+# Architecture: Multi-stage build for static assets
+# Stages: builder (Node 20) → production (nginx static serve)
+# Features: Vite production build, nginx gzip, cache headers
+# ============================================================
+
+# ------------------------------
+# Stage 1: Builder
+# ------------------------------
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies first (better layer caching)
+COPY package*.json ./
+RUN npm ci --only=production=false
+
+# Copy source code
+COPY . .
+
+# Build for production with Vite
+RUN npm run build
+
+# ------------------------------
+# Stage 2: Production (static files only)
+# ------------------------------
+FROM nginx:alpine AS production
+
+# Install security updates
+RUN apk add --no-cache \
+    ca-certificates \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy built static files from builder
+COPY --from=builder /app/dist /usr/share/nginx/html/dashboard
+
+# Copy minimal nginx config for standalone serving
+COPY nginx-dashboard.conf /etc/nginx/conf.d/default.conf
+
+# Copy custom error pages
+COPY --from=builder /app/public/error-pages /usr/share/nginx/html/error-pages 2>/dev/null || true
+
+# Create health check endpoint
+RUN echo '{"status":"healthy","service":"dashboard"}' > /usr/share/nginx/html/dashboard/health.json
+
+# Set proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html/dashboard \
+    && chmod -R 755 /usr/share/nginx/html/dashboard
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:3000/health.json || exit 1
+
+EXPOSE 3000
+
+LABEL org.opencontainers.image.title="Owlbell - Dashboard"
+LABEL org.opencontainers.image.description="React 19 static dashboard"
+LABEL org.opencontainers.image.vendor="Owlbell"
+LABEL org.opencontainers.image.source="https://github.com/answerflowai/answerflow"

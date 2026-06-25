@@ -1,0 +1,261 @@
+# ============================================================
+# Alertmanager Configuration — Owlbell
+# ============================================================
+# File: infrastructure/monitoring/alertmanager.yml
+# Routing: Slack for warnings, Slack+Email for critical
+# Features: grouping, inhibition, silence support
+# ============================================================
+
+global:
+  # Resolve timeout
+  resolve_timeout: 5m
+
+  # Slack API URL (from env var in production)
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+  # SMTP settings for email alerts (optional)
+  smtp_smarthost: '${SMTP_HOST:-localhost:587}'
+  smtp_from: '${ALERT_EMAIL_FROM:-alerts@owlbell.xyz}'
+  smtp_auth_username: '${SMTP_USER:-}'
+  smtp_auth_password: '${SMTP_PASSWORD:-}'
+  smtp_require_tls: true
+
+  # PagerDuty (for future use)
+  # pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# ----------------------------------------------------------
+# Routing Tree
+# ----------------------------------------------------------
+route:
+  # Root receiver
+  receiver: 'default'
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'severity', 'service']
+
+  # Wait before sending notification (allows grouping)
+  group_wait: 30s
+
+  # Minimum interval between notifications for same group
+  group_interval: 5m
+
+  # Minimum interval before re-sending resolved notification
+  repeat_interval: 4h
+
+  # Default routes (child routes)
+  routes:
+    # Critical alerts → Slack + Email (immediate)
+    - match:
+        severity: critical
+      receiver: 'critical-notifications'
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 1h
+      continue: true
+
+    # Warning alerts → Slack only
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      continue: false
+
+    # Info alerts → Slack #monitoring-info
+    - match:
+        severity: info
+      receiver: 'slack-info'
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 24h
+      continue: false
+
+    # Service-specific routing
+    - match_re:
+        service: api|websocket
+      receiver: 'backend-team'
+      continue: true
+
+    - match_re:
+        service: freeswitch|whisper|piper
+      receiver: 'telephony-team'
+      continue: true
+
+    - match_re:
+        service: ollama
+      receiver: 'ai-team'
+      continue: true
+
+# ----------------------------------------------------------
+# Receivers
+# ----------------------------------------------------------
+receivers:
+  # Default receiver (Slack #alerts)
+  - name: 'default'
+    slack_configs:
+      - channel: '#alerts'
+        title: '{{ if eq .Status "firing" }}:fire:{{ else }}:white_check_mark:{{ end }} {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          {{ if .Annotations.runbook_url }}*Runbook:* {{ .Annotations.runbook_url }}{{ end }}
+          *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        send_resolved: true
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: 'https://monitoring.{{ .ExternalURL }}/grafana/d/answerflow-overview'
+
+  # Critical notifications (Slack + Email)
+  - name: 'critical-notifications'
+    slack_configs:
+      - channel: '#critical-alerts'
+        title: '{{ if eq .Status "firing" }}:rotating_light: CRITICAL{{ else }}:white_check_mark: RESOLVED{{ end }} — {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *CRITICAL ALERT*
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Instance:* {{ .Labels.instance }}
+          {{ if .Annotations.runbook_url }}*Runbook:* <{{ .Annotations.runbook_url }}|Click here>{{ end }}
+          *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        actions:
+          - type: button
+            text: 'Grafana'
+            url: 'https://monitoring.{{ .ExternalURL }}/grafana/d/answerflow-overview'
+          - type: button
+            text: 'Runbook'
+            url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+    email_configs:
+      - to: '${ALERT_EMAIL_TO:-oncall@owlbell.xyz}'
+        subject: '[CRITICAL] {{ .GroupLabels.alertname }} — {{ .Status | toUpper }}'
+        body: |
+          {{ if eq .Status "firing" }}
+          CRITICAL ALERT FIRING
+          {{ else }}
+          ALERT RESOLVED
+          {{ end }}
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}Runbook: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true
+        html: '{{ template "email.default.html" . }}'
+
+  # Warning notifications (Slack only)
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#warnings'
+        title: '{{ if eq .Status "firing" }}:warning:{{ else }}:white_check_mark:{{ end }} {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Warning:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+
+  # Info notifications
+  - name: 'slack-info'
+    slack_configs:
+      - channel: '#monitoring-info'
+        title: ':information_source: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ .Annotations.summary }}
+          {{ end }}
+        send_resolved: false
+
+  # Backend team routing
+  - name: 'backend-team'
+    slack_configs:
+      - channel: '#backend-alerts'
+        title: '{{ .GroupLabels.alertname }} — {{ .GroupLabels.service }}'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  # Telephony team routing
+  - name: 'telephony-team'
+    slack_configs:
+      - channel: '#telephony-alerts'
+        title: '{{ .GroupLabels.alertname }} — {{ .GroupLabels.service }}'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  # AI team routing
+  - name: 'ai-team'
+    slack_configs:
+      - channel: '#ai-alerts'
+        title: '{{ .GroupLabels.alertname }} — {{ .GroupLabels.service }}'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+# ----------------------------------------------------------
+# Inhibit Rules (prevent alert spam)
+# ----------------------------------------------------------
+inhibit_rules:
+  # If PostgreSQL is down, suppress API latency alerts
+  - source_match:
+      severity: 'critical'
+      alertname: 'PostgreSQLDown'
+    target_match:
+      severity: 'warning'
+    equal: ['instance']
+
+  # If Redis is down, suppress API error rate alerts
+  - source_match:
+      severity: 'critical'
+      alertname: 'RedisDown'
+    target_match:
+      severity: 'warning'
+    equal: ['instance']
+
+  # Critical Ollama down suppresses high latency alerts
+  - source_match:
+      severity: 'critical'
+      alertname: 'OllamaDown'
+    target_match:
+      alertname: 'OllamaHighLatency'
+    equal: ['instance']
+
+  # Disk critical suppresses disk warning
+  - source_match:
+      severity: 'critical'
+      alertname: 'DiskSpaceCritical'
+    target_match:
+      severity: 'warning'
+      alertname: 'DiskSpaceWarning'
+    equal: ['instance']

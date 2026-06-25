@@ -1,0 +1,14 @@
+{{ define "slack.answerflow.title" }}
+{{ if eq .Status "firing" }}:fire: Firing{{ else }}:white_check_mark: Resolved{{ end }} — {{ .GroupLabels.alertname }}
+{{ end }}
+
+{{ define "slack.answerflow.text" }}
+{{ range .Alerts }}
+*{{ .Annotations.summary }}*
+{{ if .Annotations.description }}{{ .Annotations.description }}{{ end }}
+Severity: {{ .Labels.severity }}
+Service: {{ .Labels.service }}
+{{ if .Annotations.runbook_url }}Runbook: <{{ .Annotations.runbook_url }}|View>{{ end }}
+Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+{{ end }}
+{{ end }}

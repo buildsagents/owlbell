@@ -1,0 +1,16 @@
+.venv/
+.venv.bak/
+.pgdata/
+.pgdata.bak/
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dashboard/node_modules/
+next-app/node_modules/
+next-app/.next/
+dashboard/dist/
+.git/
+.github/
+*.md
+memory/

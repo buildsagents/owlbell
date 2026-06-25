@@ -1,0 +1,125 @@
+# ============================================================
+# Owlbell — FastAPI Application Dockerfile
+# ============================================================
+# Architecture: Multi-stage, ARM64 optimized
+# Stages: builder → production → celery → celery-beat
+# Base: Python 3.11 slim
+# Features: UV for fast deps, non-root user, health check
+# ============================================================
+
+# ------------------------------
+# Stage 1: Builder
+# ------------------------------
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install UV for fast dependency resolution
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Copy dependency files
+COPY requirements.txt .
+COPY requirements.lock ./requirements.lock 2>/dev/null || true
+
+# Install Python dependencies with UV
+RUN uv pip install --system --no-cache -r requirements.txt
+
+# ------------------------------
+# Stage 2: Production
+# ------------------------------
+FROM python:3.11-slim AS production
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed Python packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Environment variables for Python
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONFAULTHANDLER=1
+ENV PYTHONHASHSEED=random
+
+# Copy application code
+COPY ./app ./app
+COPY ./migrations ./migrations
+COPY ./alembic.ini ./alembic.ini
+COPY ./pyproject.toml ./pyproject.toml
+COPY ./gunicorn.conf.py ./gunicorn.conf.py 2>/dev/null || true
+
+# Create non-root user for security
+RUN groupadd -r appuser --gid=1000 \
+    && useradd -r -g appuser --uid=1000 appuser \
+    && chown -R appuser:appuser /app \
+    && mkdir -p /tmp/prometheus \
+    && chown -R appuser:appuser /tmp/prometheus
+
+# Switch to non-root user
+USER appuser
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+# Expose API and metrics ports
+EXPOSE 8000 9000
+
+# Run with uvicorn (production-grade ASGI server)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--workers", "2", "--proxy-headers", "--access-log", "--log-level", "info", \
+     "--timeout-keep-alive", "30", "--limit-max-requests", "10000"]
+
+# Labels for container registry
+LABEL org.opencontainers.image.title="Owlbell - API"
+LABEL org.opencontainers.image.description="FastAPI application server"
+LABEL org.opencontainers.image.vendor="Owlbell"
+LABEL org.opencontainers.image.source="https://github.com/answerflowai/answerflow"
+
+# ------------------------------
+# Stage 3: Celery Worker
+# ------------------------------
+FROM production AS celery
+
+USER root
+
+# Install ffmpeg for audio processing in worker tasks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+USER appuser
+
+# Override CMD for celery worker
+CMD ["celery", "-A", "app.celery_app", "worker", "-l", "INFO"]
+
+LABEL org.opencontainers.image.title="Owlbell - Celery Worker"
+LABEL org.opencontainers.image.description="Background task processing worker"
+
+# ------------------------------
+# Stage 4: Celery Beat (Scheduler)
+# ------------------------------
+FROM production AS celery-beat
+
+# Override CMD for celery beat scheduler
+CMD ["celery", "-A", "app.celery_app", "beat", "-l", "INFO", \
+     "-s", "/tmp/celerybeat-schedule", \
+     "--pidfile", "/tmp/celerybeat.pid"]
+
+LABEL org.opencontainers.image.title="Owlbell - Celery Beat"
+LABEL org.opencontainers.image.description="Scheduled task runner"

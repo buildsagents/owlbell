@@ -1,0 +1,21 @@
+; ============================================================
+; Owlbell — mod_audio_stream Configuration
+; ============================================================
+; Enables bidirectional audio streaming between FreeSWITCH and
+; the orchestrator WebSocket for real-time AI processing.
+; ============================================================
+
+<configuration name="audio_stream.conf" description="Audio Stream Configuration">
+  <settings>
+    <!-- WebSocket endpoint on the orchestrator -->
+    <param name="ws-url" value="ws://api:8000/api/v1/orchestrator/ws/call/${channel_uuid}/audio"/>
+    <!-- Audio format: 16-bit PCM, 16kHz, mono -->
+    <param name="sample-rate" value="16000"/>
+    <param name="channels" value="1"/>
+    <!-- Buffer size in milliseconds -->
+    <param name="buffer-ms" value="20"/>
+    <!-- Reconnect settings -->
+    <param name="reconnect-attempts" value="3"/>
+    <param name="reconnect-interval-ms" value="1000"/>
+  </settings>
+</configuration>

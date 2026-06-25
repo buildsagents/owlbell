@@ -1,0 +1,45 @@
+# Curated lightweight deps to boot the API locally (no heavy ML/telephony stack).
+# -- Core Framework --
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+starlette==0.41.3
+# -- Config / Auth --
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+python-jose[cryptography]==3.3.0
+PyJWT==2.10.1
+passlib[bcrypt]==1.7.4
+# -- Database --
+SQLAlchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+greenlet==3.1.1
+# -- Cache / Pub-Sub (fakeredis for local, no server needed) --
+redis==5.2.0
+fakeredis==2.26.1
+# -- Distributed tasks (imported by orchestrator) --
+celery==5.4.0
+kombu==5.4.0
+billiard==4.2.1
+# -- HTTP clients --
+aiohttp==3.11.10
+aiofiles==24.1.0
+httpx==0.28.1
+requests==2.32.3
+# -- Telemetry --
+prometheus-client==0.21.1
+structlog==24.4.0
+# -- Utilities --
+orjson==3.10.12
+ujson==5.10.0
+PyYAML==6.0.2
+toml==0.10.2
+croniter==5.0.1
+tenacity==9.0.0
+cachetools==5.5.0
+python-multipart==0.0.19
+itsdangerous==2.2.0
+email-validator==2.2.0
+Jinja2==3.1.4
+Markdown==3.7
