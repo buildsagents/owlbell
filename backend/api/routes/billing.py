@@ -47,6 +47,13 @@ class PortalRequest(BaseModel):
     customer_id: str = Field(..., description="Stripe customer ID for this tenant.")
 
 
+class PublicCheckoutRequest(BaseModel):
+    """Self-serve checkout from the landing page — no auth required."""
+    plan: str = Field(..., description="basic | pro | pro_plus")
+    period: str = Field("monthly", pattern="^(monthly|annual)$")
+    email: str = Field(..., description="Customer email for the checkout session.")
+
+
 @router.get("/plans")
 async def get_plans() -> dict[str, Any]:
     """List managed-service tiers and whether billing is live (no secrets)."""
@@ -57,6 +64,25 @@ async def get_plans() -> dict[str, Any]:
             "plans": stripe_service.list_plans(),
         },
     }
+
+
+@router.post("/public-checkout")
+async def public_checkout(body: PublicCheckoutRequest) -> dict[str, Any]:
+    """Self-serve checkout from the landing page — no auth required."""
+    if not stripe_service.is_configured():
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, _NOT_CONFIGURED)
+    try:
+        out = stripe_service.create_checkout_session(
+            plan=body.plan,
+            period=body.period,
+            customer_email=body.email,
+            tenant_id="",  # no tenant yet; _provision creates one on webhook
+        )
+    except stripe_service.BillingNotConfigured as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc))
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+    return {"success": True, "data": out}
 
 
 @router.post("/checkout")

@@ -62,6 +62,7 @@ EXEMPT_PATHS = {
     "/api/v1/auth/reset-password",
     "/api/v1/auth/magic-link",
     "/api/v1/auth/verify-email",
+    "/api/v1/billing/public-checkout",  # Self-serve checkout from landing page
     "/api/v1/billing/webhook",  # Stripe calls this unauthenticated; verified by signature
     "/api/v1/webhooks/retell",  # Retell calls this unauthenticated; verified by signature
     "/health",
