@@ -65,6 +65,8 @@ EXEMPT_PATHS = {
     "/api/v1/billing/public-checkout",  # Self-serve checkout from landing page
     "/api/v1/billing/webhook",  # Stripe calls this unauthenticated; verified by signature
     "/api/v1/webhooks/retell",  # Retell calls this unauthenticated; verified by signature
+    "/api/v1/leads/run",  # Cron-triggered pipeline (protected by ?secret=)
+    "/api/v1/leads/stats",
     "/health",
     "/docs",
     "/openapi.json",
@@ -313,6 +315,7 @@ def _include_routers(app: FastAPI) -> None:
     from api.routes import integrations, team, admin, billing
     from api.routes import agency, client_portal, phone_numbers
     from api.routes import retell_webhooks
+    from api.routes import leads as leads_router
 
     app.include_router(auth.router, prefix=f"{API_PREFIX}/auth")
     app.include_router(calls.router, prefix=f"{API_PREFIX}/calls")
@@ -327,6 +330,7 @@ def _include_routers(app: FastAPI) -> None:
     app.include_router(client_portal.router, prefix=API_PREFIX)  # router self-prefixes with /portal
     app.include_router(phone_numbers.router, prefix=API_PREFIX)  # router self-prefixes with /phone-numbers
     app.include_router(retell_webhooks.router, prefix=API_PREFIX)  # router self-prefixes with /webhooks/retell
+    app.include_router(leads_router.router)  # self-prefixes with /api/v1/leads
 
 
 # Create the global app instance

@@ -498,6 +498,8 @@ class IntegrationSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="INTEGRATION_",
+        env_file=str(ENV_FILE) if ENV_FILE.exists() else None,
+        env_file_encoding="utf-8",
         extra="ignore",
     )
 
@@ -508,10 +510,18 @@ class IntegrationSettings(BaseSettings):
     twilio_sip_trunk_sid: Optional[str] = None
     twilio_sip_trunk_termination_uri: Optional[str] = None
 
-    # SendGrid (for email)
+    # SendGrid (for email — fallback)
     sendgrid_api_key: Optional[SecretStr] = None
     sendgrid_from_email: str = "noreply@owlbell.xyz"
     sendgrid_from_name: str = "Owlbell"
+
+    # Gmail SMTP (primary email sender — free, App Password, 500/day)
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[SecretStr] = None
+    smtp_from_email: str = "buildsagents@gmail.com"
+    smtp_from_name: str = "Owlbell"
 
     # Slack (for notifications)
     slack_webhook_url: Optional[SecretStr] = None
@@ -547,6 +557,9 @@ class IntegrationSettings(BaseSettings):
     # Retell AI (for phone provisioning and AI agents)
     retell_api_key: Optional[SecretStr] = None
     retell_webhook_secret: Optional[SecretStr] = None
+
+    # Google Maps (for lead generation — Places API)
+    google_maps_api_key: Optional[SecretStr] = None
 
     # Webhook defaults
     webhook_max_retries: int = 3

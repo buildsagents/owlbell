@@ -60,8 +60,8 @@ async def _request_with_retry(
     last_exc: Optional[Exception] = None
     for attempt in range(MAX_RETRIES + 1):
         try:
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                req = client.build_request(method, url, auth=auth, data=data, params=params)
+            async with httpx.AsyncClient(timeout=timeout, auth=auth) as client:
+                req = client.build_request(method, url, data=data, params=params)
                 if idempotency_key:
                     req.headers["Idempotency-Key"] = idempotency_key
                 resp = await client.send(req)

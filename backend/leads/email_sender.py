@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+import asyncio
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Optional
+
+import structlog
+
+from backend.config import get_settings
+
+logger = structlog.get_logger(__name__)
+
+
+def _smtp_config():
+    s = get_settings()
+    cfg = s.integrations
+    password = cfg.smtp_password
+    if hasattr(password, "get_secret_value"):
+        password = password.get_secret_value()
+    return {
+        "host": cfg.smtp_host,
+        "port": cfg.smtp_port,
+        "username": cfg.smtp_username,
+        "password": password,
+        "from_email": cfg.smtp_from_email,
+        "from_name": cfg.smtp_from_name,
+    }
+
+
+def is_configured() -> bool:
+    cfg = _smtp_config()
+    return bool(cfg["username"] and cfg["password"])
+
+
+def _build_message(
+    to_email: str,
+    to_name: str,
+    subject: str,
+    body_text: str,
+    reply_to: Optional[str] = None,
+) -> str:
+    msg = MIMEMultipart("alternative")
+    cfg = _smtp_config()
+    msg["From"] = f"{cfg['from_name']} <{cfg['from_email']}>"
+    msg["To"] = f"{to_name} <{to_email}>"
+    msg["Subject"] = subject
+    if reply_to:
+        msg["Reply-To"] = reply_to
+    msg.attach(MIMEText(body_text, "plain", "utf-8"))
+    return msg.as_string()
+
+
+async def send_email(
+    to_email: str,
+    to_name: str,
+    subject: str,
+    body_text: str,
+    reply_to: Optional[str] = None,
+) -> dict:
+    if not is_configured():
+        return {"success": False, "error": "SMTP not configured (set INTEGRATION_SMTP_USERNAME + INTEGRATION_SMTP_PASSWORD)"}
+
+    cfg = _smtp_config()
+    raw_message = _build_message(to_email, to_name, subject, body_text, reply_to)
+
+    def _send():
+        with smtplib.SMTP(cfg["host"], cfg["port"]) as server:
+            server.starttls()
+            server.login(cfg["username"], cfg["password"])
+            server.sendmail(cfg["from_email"], [to_email], raw_message)
+
+    try:
+        await asyncio.to_thread(_send)
+        logger.info("email.sent", to=to_email, subject=subject)
+        return {"success": True}
+    except smtplib.SMTPAuthenticationError:
+        logger.error("email.auth_error", hint="Check INTEGRATION_SMTP_USERNAME and INTEGRATION_SMTP_PASSWORD. For Gmail, use an App Password.")
+        return {"success": False, "error": "SMTP authentication failed"}
+    except Exception as exc:
+        logger.error("email.send_error", to=to_email, error=str(exc))
+        return {"success": False, "error": str(exc)}
