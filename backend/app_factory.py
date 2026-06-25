@@ -510,7 +510,6 @@ def _register_api_routers(app: FastAPI, settings: Settings) -> None:
         from api.routes import auth, calls, messages, appointments, business
         from api.routes import integrations, team, admin, analytics, billing
         from api.routes import agency, client_portal, phone_numbers
-        from api.routes import leads as leads_router
 
         # NOTE: each of these routers already self-prefixes with its own name
         # (e.g. APIRouter(prefix="/auth")), so they are mounted at API_PREFIX only.
@@ -529,10 +528,17 @@ def _register_api_routers(app: FastAPI, settings: Settings) -> None:
         app.include_router(agency.router, prefix=API_PREFIX)
         app.include_router(client_portal.router, prefix=API_PREFIX)
         app.include_router(phone_numbers.router, prefix=API_PREFIX)
-        app.include_router(leads_router.router)
         logger.info("app.routers.api.registered")
     except Exception as exc:
         logger.error("app.routers.api.failed", error=str(exc))
+
+    # Leads route (separate try/except to avoid breaking all API routes)
+    try:
+        from api.routes import leads as leads_router
+        app.include_router(leads_router.router)
+        logger.info("app.routers.leads.registered")
+    except Exception as exc:
+        logger.warning("app.routers.leads.skipped", error=str(exc))
 
     # Operations routes
     try:
