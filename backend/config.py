@@ -515,7 +515,14 @@ class IntegrationSettings(BaseSettings):
     sendgrid_from_email: str = "noreply@owlbell.xyz"
     sendgrid_from_name: str = "Owlbell"
 
-    # Gmail SMTP (primary email sender — free, App Password, 500/day)
+    # Gmail API OAuth (for sending email via REST API on port 443 — works on Railway)
+    gmail_client_id: Optional[str] = None
+    gmail_client_secret: Optional[SecretStr] = None
+    gmail_refresh_token: Optional[SecretStr] = None
+    gmail_from_email: str = "buildsagents@gmail.com"
+    gmail_from_name: str = "Owlbell"
+
+    # Gmail SMTP (fallback for local dev — blocked on Railway)
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
     smtp_username: Optional[str] = None

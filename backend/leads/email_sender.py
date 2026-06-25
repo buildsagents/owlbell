@@ -9,6 +9,8 @@ from typing import Optional
 import structlog
 
 from backend.config import get_settings
+from backend.integrations.gmail.service import send_email as gmail_send
+from backend.integrations.gmail.service import is_configured as gmail_configured
 from backend.integrations.sendgrid.service import send_email as sendgrid_send
 from backend.integrations.sendgrid.service import is_configured as sendgrid_configured
 
@@ -32,6 +34,8 @@ def _smtp_config():
 
 
 def is_configured() -> bool:
+    if gmail_configured():
+        return True
     if sendgrid_configured():
         return True
     cfg = _smtp_config()
@@ -63,7 +67,17 @@ async def send_email(
     body_text: str,
     reply_to: Optional[str] = None,
 ) -> dict:
-    # Prefer SendGrid (REST API on port 443, works from Railway)
+    # 1. Gmail API OAuth (port 443, works on Railway, no sender verification needed)
+    if gmail_configured():
+        logger.info("email.send_via_gmail_api", to=to_email, subject=subject)
+        return await gmail_send(
+            to_email=to_email,
+            to_name=to_name,
+            subject=subject,
+            body_text=body_text,
+        )
+
+    # 2. SendGrid REST API (port 443, works on Railway, needs verified sender)
     if sendgrid_configured():
         logger.info("email.send_via_sendgrid", to=to_email, subject=subject)
         return await sendgrid_send(
@@ -73,9 +87,9 @@ async def send_email(
             content=body_text,
         )
 
-    # Fall back to SMTP (works locally, blocked on Railway)
+    # 3. SMTP fallback (blocked on Railway, works locally)
     if not _smtp_config()["username"] or not _smtp_config()["password"]:
-        return {"success": False, "error": "No email provider configured (set SendGrid API key or SMTP credentials)"}
+        return {"success": False, "error": "No email provider configured (set Gmail API OAuth, SendGrid key, or SMTP)"}
 
     cfg = _smtp_config()
     raw_message = _build_message(to_email, to_name, subject, body_text, reply_to)
