@@ -120,6 +120,8 @@ class RedisSettings(BaseSettings):
         extra="ignore",
     )
 
+    redis_url: Optional[str] = Field(default=None, validation_alias="REDIS_URL")
+
     host: str = "localhost"
     port: int = 6379
     db: int = 0
@@ -135,7 +137,9 @@ class RedisSettings(BaseSettings):
 
     @property
     def url(self) -> str:
-        """Build Redis connection URL."""
+        """Build Redis connection URL. Uses REDIS_URL if set (Railway plugin)."""
+        if self.redis_url:
+            return self.redis_url
         scheme = "rediss" if self.ssl else "redis"
         creds = ""
         if self.password:
@@ -151,6 +155,8 @@ class RedisSettings(BaseSettings):
     @property
     def backend_url(self) -> str:
         """Celery result backend URL (same as Redis URL with DB 1)."""
+        if self.redis_url:
+            return self.redis_url
         scheme = "rediss" if self.ssl else "redis"
         creds = ""
         if self.password:

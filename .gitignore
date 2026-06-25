@@ -6,6 +6,7 @@ __pycache__/
 .venv.bak/
 .pgdata/
 .pgdata.bak/
+.pgdata_verify/
 *.db
 
 # Node
