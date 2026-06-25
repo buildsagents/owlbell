@@ -66,10 +66,15 @@ async def send_email(
     raw_message = _build_message(to_email, to_name, subject, body_text, reply_to)
 
     def _send():
-        with smtplib.SMTP(cfg["host"], cfg["port"]) as server:
-            server.starttls()
-            server.login(cfg["username"], cfg["password"])
-            server.sendmail(cfg["from_email"], [to_email], raw_message)
+        if cfg["port"] == 465:
+            with smtplib.SMTP_SSL(cfg["host"], cfg["port"], timeout=15) as server:
+                server.login(cfg["username"], cfg["password"])
+                server.sendmail(cfg["from_email"], [to_email], raw_message)
+        else:
+            with smtplib.SMTP(cfg["host"], cfg["port"], timeout=15) as server:
+                server.starttls()
+                server.login(cfg["username"], cfg["password"])
+                server.sendmail(cfg["from_email"], [to_email], raw_message)
 
     try:
         await asyncio.to_thread(_send)
