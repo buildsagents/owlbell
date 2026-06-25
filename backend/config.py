@@ -346,14 +346,11 @@ class SecuritySettings(BaseSettings):
     login_lockout_minutes: int = 15
     require_email_verification: bool = False
     allowed_hosts: List[str] = Field(default_factory=lambda: ["*"])
-    cors_origins: List[str] = Field(default_factory=lambda: ["*"])
+    cors_origins_str: str = Field(default="*", validation_alias="SECURITY_CORS_ORIGINS")
 
-    @field_validator("cors_origins", "allowed_hosts", mode="before")
-    @classmethod
-    def split_csv(cls, v):
-        if isinstance(v, str):
-            return [x.strip() for x in v.split(",") if x.strip()]
-        return v
+    @property
+    def cors_origins(self) -> List[str]:
+        return [x.strip() for x in self.cors_origins_str.split(",") if x.strip()]
 
     # Rate limits (per minute)
     rate_limit_anon_per_minute: int = 30
