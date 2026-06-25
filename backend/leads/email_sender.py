@@ -9,6 +9,8 @@ from typing import Optional
 import structlog
 
 from backend.config import get_settings
+from backend.integrations.sendgrid.service import send_email as sendgrid_send
+from backend.integrations.sendgrid.service import is_configured as sendgrid_configured
 
 logger = structlog.get_logger(__name__)
 
@@ -30,6 +32,8 @@ def _smtp_config():
 
 
 def is_configured() -> bool:
+    if sendgrid_configured():
+        return True
     cfg = _smtp_config()
     return bool(cfg["username"] and cfg["password"])
 
@@ -59,8 +63,19 @@ async def send_email(
     body_text: str,
     reply_to: Optional[str] = None,
 ) -> dict:
-    if not is_configured():
-        return {"success": False, "error": "SMTP not configured (set INTEGRATION_SMTP_USERNAME + INTEGRATION_SMTP_PASSWORD)"}
+    # Prefer SendGrid (REST API on port 443, works from Railway)
+    if sendgrid_configured():
+        logger.info("email.send_via_sendgrid", to=to_email, subject=subject)
+        return await sendgrid_send(
+            to_email=to_email,
+            to_name=to_name,
+            subject=subject,
+            content=body_text,
+        )
+
+    # Fall back to SMTP (works locally, blocked on Railway)
+    if not _smtp_config()["username"] or not _smtp_config()["password"]:
+        return {"success": False, "error": "No email provider configured (set SendGrid API key or SMTP credentials)"}
 
     cfg = _smtp_config()
     raw_message = _build_message(to_email, to_name, subject, body_text, reply_to)
@@ -78,7 +93,7 @@ async def send_email(
 
     try:
         await asyncio.to_thread(_send)
-        logger.info("email.sent", to=to_email, subject=subject)
+        logger.info("email.sent_via_smtp", to=to_email, subject=subject)
         return {"success": True}
     except smtplib.SMTPAuthenticationError:
         logger.error("email.auth_error", hint="Check INTEGRATION_SMTP_USERNAME and INTEGRATION_SMTP_PASSWORD. For Gmail, use an App Password.")
