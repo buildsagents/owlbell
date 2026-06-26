@@ -557,6 +557,10 @@ def _register_api_routers(app: FastAPI, settings: Settings) -> None:
         from api.routes import retell_webhooks
         app.include_router(retell_webhooks.router, prefix=API_PREFIX)
 
+        # Retell AI custom tool endpoints (UNAUTHENTICATED — verified by shared secret)
+        from api.routes import agent_tools
+        app.include_router(agent_tools.router, prefix=API_PREFIX)
+
         logger.info("app.routers.api.registered")
     except Exception as exc:
         logger.error("app.routers.api.failed", error=str(exc))
@@ -947,6 +951,7 @@ def create_app(env: Optional[str] = None, settings: Optional[Settings] = None) -
             "/api/v1/billing/webhook",
             "/api/v1/billing/public-checkout",
             "/api/v1/webhooks/retell",
+            "/api/v1/agent/tools",
             "/api/v1/leads/run",
             "/api/v1/leads/all",
             "/api/v1/leads/check-replies",

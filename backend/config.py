@@ -570,6 +570,7 @@ class IntegrationSettings(BaseSettings):
     # Retell AI (for phone provisioning and AI agents)
     retell_api_key: Optional[SecretStr] = None
     retell_webhook_secret: Optional[SecretStr] = None
+    retell_agent_tools_secret: Optional[SecretStr] = None
 
     # Google Maps (for lead generation — Places API)
     google_maps_api_key: Optional[SecretStr] = None
