@@ -114,7 +114,7 @@ async def generate_email(
 
     try:
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=prompt,
             config=genai_types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
@@ -136,7 +136,7 @@ async def classify_reply(reply_text: str) -> str:
     prompt = REPLY_CLASSIFY_PROMPT.format(reply=reply_text)
     try:
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=prompt,
             config=genai_types.GenerateContentConfig(temperature=0.1, max_output_tokens=20),
         )
@@ -169,7 +169,7 @@ async def generate_reply(
 
     try:
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=prompt,
             config=genai_types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
