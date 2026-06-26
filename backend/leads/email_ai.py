@@ -1,4 +1,4 @@
-"""AI-powered email personalization and reply handling using OpenAI."""
+"""AI-powered email personalization and reply handling using Groq (free, fast inference API)."""
 
 from __future__ import annotations
 
@@ -73,21 +73,24 @@ Guidelines:
 - Sound like a real person, not a sales bot
 - Sign with a random name from: Mike, Dave, Chris, Pat, Steve, Tony, Jesse, Ryan"""
 
-MODEL = "gpt-4o-mini"
+MODEL = "llama-3.3-70b-versatile"
 
 
 def _get_client() -> Optional[AsyncOpenAI]:
     s = get_settings()
-    key = s.integrations.openai_api_key
+    key = s.integrations.groq_api_key
     if not key:
         return None
     if hasattr(key, "get_secret_value"):
         key = key.get_secret_value()
-    return AsyncOpenAI(api_key=key)
+    return AsyncOpenAI(
+        api_key=key,
+        base_url="https://api.groq.com/openai/v1",
+    )
 
 
 def is_configured() -> bool:
-    return bool(get_settings().integrations.openai_api_key)
+    return bool(get_settings().integrations.groq_api_key)
 
 
 async def _chat(messages: list[dict], temperature: float = 0.7, max_tokens: int = 500) -> Optional[str]:

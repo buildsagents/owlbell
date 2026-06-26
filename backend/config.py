@@ -522,8 +522,8 @@ class IntegrationSettings(BaseSettings):
     gmail_from_email: str = "buildsagents@gmail.com"
     gmail_from_name: str = "Owlbell"
 
-    # OpenAI (for AI-powered email personalization, reply handling, and classification)
-    openai_api_key: Optional[SecretStr] = None
+    # Groq (free fast-AI inference for email personalization, reply handling, and classification)
+    groq_api_key: Optional[SecretStr] = None
 
     # Gmail SMTP (fallback for local dev — blocked on Railway)
     smtp_host: str = "smtp.gmail.com"
