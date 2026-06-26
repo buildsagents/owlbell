@@ -44,7 +44,7 @@
     <span id="statusText">Ready to test</span>
   </div>
 
-  <button class="btn btn-start" id="callBtn" onclick="toggleCall()">Start Call</button>
+  <button class="btn btn-start" id="callBtn">Start Call</button>
 
   <div class="transcript" id="transcript">
     <div style="color:#64748b;text-align:center;padding:20px">Call transcript will appear here...</div>
@@ -53,28 +53,39 @@
   <div class="info" id="callIdDisplay"></div>
 </div>
 
-<script src="https://unpkg.com/retell-client-js-sdk@latest/retell-client-sdk.js"></script>
-<script>
+<script type="module">
+import { RetellWebClient } from "https://esm.sh/retell-client-js-sdk@2.0.8";
+
 const AGENT_ID = 'agent_233aac32d03d073ad7774a5ca2';
 const API_BASE = '';
 let client = null;
 let isCallActive = false;
 
+document.getElementById('callBtn').addEventListener('click', toggleCall);
+
 function setStatus(text, state) {
   document.getElementById('statusText').textContent = text;
-  const dot = document.getElementById('statusDot');
-  dot.className = 'dot ' + state;
+  document.getElementById('statusDot').className = 'dot ' + state;
 }
 
-async function getAccessToken() {
-  const resp = await fetch(`${API_BASE}/api/v1/webhooks/retell/test-token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ agent_id: AGENT_ID })
-  });
-  if (!resp.ok) throw new Error('Failed to get access token');
-  const data = await resp.json();
-  return data.access_token;
+function addMessage(text, type) {
+  const el = document.getElementById('transcript');
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + type;
+  msg.innerHTML = `<div class="speaker">${type === 'agent' ? 'Agent' : 'You'}</div>${text}`;
+  if (el.querySelector('[style]')) el.innerHTML = '';
+  el.appendChild(msg);
+  el.scrollTop = el.scrollHeight;
+}
+
+function onCallEnded() {
+  setStatus('Call ended', 'idle');
+  const btn = document.getElementById('callBtn');
+  btn.textContent = 'Start Call';
+  btn.className = 'btn btn-start';
+  btn.disabled = false;
+  isCallActive = false;
+  client = null;
 }
 
 async function toggleCall() {
@@ -88,7 +99,6 @@ async function toggleCall() {
   setStatus('Connecting...', 'connecting');
 
   try {
-    // Create web call via our backend
     const resp = await fetch(`${API_BASE}/api/v1/webhooks/retell/test-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -114,7 +124,7 @@ async function toggleCall() {
 
     client = new RetellWebClient();
     client.on('call_started', () => {
-      setStatus('Connected — speak now!', 'connected');
+      setStatus('Connected \u2014 speak now!', 'connected');
       btn.textContent = 'End Call';
       btn.className = 'btn btn-stop';
       btn.disabled = false;
@@ -155,26 +165,6 @@ async function toggleCall() {
     btn.disabled = false;
     isCallActive = false;
   }
-}
-
-function onCallEnded() {
-  setStatus('Call ended', 'idle');
-  const btn = document.getElementById('callBtn');
-  btn.textContent = 'Start Call';
-  btn.className = 'btn btn-start';
-  btn.disabled = false;
-  isCallActive = false;
-  client = null;
-}
-
-function addMessage(text, type) {
-  const el = document.getElementById('transcript');
-  const msg = document.createElement('div');
-  msg.className = 'msg ' + type;
-  msg.innerHTML = `<div class="speaker">${type === 'agent' ? 'Agent' : 'You'}</div>${text}`;
-  if (el.querySelector('[style]')) el.innerHTML = '';
-  el.appendChild(msg);
-  el.scrollTop = el.scrollHeight;
 }
 </script>
 </body>
