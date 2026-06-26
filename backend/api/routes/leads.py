@@ -1,17 +1,23 @@
-"""leads route — synchronous pipeline (split scrape/send to avoid Railway timeout)."""
+"""Lead pipeline routes — AI-powered outreach with scoring, scheduling, and auto-refill."""
 
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.leads.scraper import find_contractors, is_configured as scraper_configured
-from backend.leads.email_finder import find_emails_for_leads
-from backend.leads.outreach import send_initial_outreach, get_stats
-from backend.leads.reply_handler import handle_replies
 from backend.leads import lead_store
+from backend.leads.outreach import run_initial_batch, run_followup_batch, run_full_pipeline, get_stats
+from backend.leads.lead_scorer import score_pending_leads
+from backend.leads.lead_generator import (
+    discover_new_leads,
+    ensure_lead_pool,
+    get_pool_depth,
+    discover_untapped_markets,
+)
+from backend.leads.reply_handler import handle_replies
 
 router = APIRouter(prefix="/api/v1/leads", tags=["leads"])
 
@@ -27,79 +33,69 @@ def _verify_secret(secret: Optional[str] = None) -> None:
 
 @router.post("/run")
 async def run_pipeline(
-    mode: str = Query("initial", description="'initial' (scrape+sand), 'send' (send pending)"),
-    trades: str = Query("hvac,plumbing,roofing,electrical"),
-    cities: str = Query("Austin-TX,RoundRock-TX,CedarPark-TX"),
-    max_leads: int = Query(80),
-    max_outreach: int = Query(5, description="Max to send (keep low to avoid timeout)"),
+    mode: str = Query("full", description="'full', 'initial', 'followup', 'score', 'discover'"),
+    max_initial: int = Query(15, description="Max initial emails to send"),
+    max_followups: int = Query(20, description="Max follow-ups to send"),
+    dry_run: bool = Query(False, description="Simulate without sending"),
     secret: Optional[str] = Query(None),
 ):
-    """Scrape + find emails (mode=initial, fast) or send pending (mode=send, send pending)."""
+    """Run the outreach pipeline. Requires cron secret."""
     _verify_secret(secret)
 
-    if mode == "send":
-        pending = lead_store.get_pending_send()
-        total_pending = len(pending)
-        to_send = pending[:max_outreach]
-        sent = 0
-        errors = 0
-        for lead in to_send:
-            from backend.leads.outreach import send_initial
+    if mode == "initial":
+        return await run_initial_batch(max_per_batch=max_initial, dry_run=dry_run)
+    elif mode == "followup":
+        return await run_followup_batch(max_per_batch=max_followups, dry_run=dry_run)
+    elif mode == "score":
+        scored = await score_pending_leads(limit=100)
+        return {"status": "ok", "scored": scored}
+    elif mode == "discover":
+        new_leads = await discover_new_leads(max_per_search=10)
+        return {"status": "ok", "new_leads": new_leads, "pool_depth": get_pool_depth()}
+    elif mode == "refill":
+        refill = await ensure_lead_pool(min_pool=50)
+        return {"status": "ok", **refill}
 
-            result = await send_initial(lead, dry_run=False)
-            if result.get("success"):
-                lead_store.mark_sent(lead["email"])
-                sent += 1
-            else:
-                errors += 1
-            import asyncio
-            await asyncio.sleep(1)
-        return {"status": "ok", "mode": "send", "pending": total_pending, "sent": sent, "errors": errors}
-
-    if not scraper_configured():
-        return {"status": "error", "error": "Google Maps API key not configured"}
-
-    city_list = []
-    for part in cities.split(","):
-        part = part.strip()
-        if "-" in part:
-            city, state = part.rsplit("-", 1)
-            city_list.append({"city": city.strip(), "state": state.strip().upper()})
-
-    trade_list = [t.strip() for t in trades.split(",")]
-
-    leads = await find_contractors(trades=trade_list, cities=city_list, max_per_search=min(max_leads, 20))
-    if not leads:
-        return {"status": "error", "error": "No leads found"}
-
-    leads_with_emails = await find_emails_for_leads(leads)
-    with_email = [l for l in leads_with_emails if l.get("email")]
-
-    result = {"leads_found": len(leads), "with_email": len(with_email)}
-
-    if with_email and max_outreach > 0:
-        outreach_results = await send_initial_outreach(with_email, max_per_day=max_outreach)
-        sent_count = sum(1 for r in outreach_results if r.get("outreach_status") == "sent")
-        result["emails_sent"] = sent_count
-    else:
-        result["emails_sent"] = 0
-
-    return {"status": "ok", "mode": "initial", **result}
+    # Full pipeline
+    results = await run_full_pipeline(
+        max_initial=max_initial,
+        max_followups=max_followups,
+        dry_run=dry_run,
+    )
+    return {"status": "ok", "mode": "full", **results}
 
 
 @router.post("/check-replies")
 async def check_replies_endpoint(secret: Optional[str] = Query(None)):
+    """Check inbox for replies and auto-respond with AI."""
     _verify_secret(secret)
     return await handle_replies()
 
 
 @router.get("/all")
 async def get_all_leads(secret: Optional[str] = Query(None)):
+    """Get all leads with full history."""
     _verify_secret(secret)
-    return lead_store.get_all_leads()
+    return {"leads": lead_store.get_all_leads(), "stats": lead_store.stats()}
 
 
 @router.get("/stats")
 async def pipeline_stats(secret: Optional[str] = Query(None)):
+    """Get pipeline statistics."""
     _verify_secret(secret)
     return get_stats()
+
+
+@router.get("/pool")
+async def pool_health(secret: Optional[str] = Query(None)):
+    """Check lead pool health and upcoming markets."""
+    _verify_secret(secret)
+    queue = await discover_untapped_markets()
+    return {
+        "pool_depth": get_pool_depth(),
+        "low": get_pool_depth() < 30,
+        "total_in_store": lead_store.get_lead_count(),
+        "pending_send": len(lead_store.get_pending_send(limit=9999)),
+        "markets_remaining": len(queue),
+        "next_markets": queue[:5],
+    }

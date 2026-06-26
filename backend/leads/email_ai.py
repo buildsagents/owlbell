@@ -73,6 +73,85 @@ Guidelines:
 - Sound like a real person, not a sales bot
 - Sign with a random name from: Mike, Dave, Chris, Pat, Steve, Tony, Jesse, Ryan"""
 
+SCORE_PROMPT = """You are a lead scoring AI for a cold email outreach platform. Score this contractor lead from 1 (worst) to 10 (best) based on how likely they are to convert.
+
+Lead data:
+- Name: {name}
+- Trade: {trade}
+- City: {city}, {state}
+- Website: {website}
+- Phone: {phone}
+- Rating: {rating}/5
+- Reviews: {review_count}
+- Business status: {business_status}
+
+Scoring rules:
+- +2 if they have a professional website (not just Facebook/Yelp)
+- +1 if they have a phone number
+- +1 if rating >= 4.0
+- +1 if review_count >= 20
+- +1 if business_status is OPERATIONAL
+- +2 if they invest in their online presence (website has blog, pricing, or service pages)
+- -1 if no website found
+- -2 if business_status is CLOSED_TEMPORARILY or CLOSED_PERMANENTLY
+
+Respond with JUST a number 1-10. No explanation."""
+
+SCORE_WITH_WEBSITE_PROMPT = """Analyze this contractor's website and update their lead score.
+
+Business: {name} ({trade}, {city}, {state})
+Website: {website}
+
+Check:
+- Does the site look professional?
+- Does it have a blog or service pages?
+- Does it have pricing info?
+- Is the site modern or outdated?
+- Does it have a contact form or online booking?
+
+Brief analysis (1 sentence), then score 1-10 on a new line."""
+
+FOLLOWUP_1_PROMPT = """Write a follow-up email (max 120 words) for {business_name}, a {trade} contractor in {city}, {state}.
+
+Context: We sent them a cold email {days_since} days ago about Owlbell (24/7 call answering for contractors). They didn't reply.
+
+The email should:
+- Reference the previous email naturally (not "did you get my email")
+- Use a different angle than "you're missing calls"
+- Mention that other {trade} contractors in {city} are already using it
+- Keep it short and respectful
+- End with owlbell.xyz/pricing?ref=lead&f=1
+
+Sign as: Mike, Dave, Chris, Pat, Steve, Tony, Jesse, or Ryan (pick different from previous).
+NO greetings. Direct and conversational."""
+
+FOLLOWUP_2_PROMPT = """Write a second follow-up email (max 100 words) for {business_name}, a {trade} contractor in {city}, {state}.
+
+Context: They haven't replied to two previous emails about Owlbell (24/7 call answering for contractors).
+
+The email should:
+- Be short and direct
+- Lead with social proof ("Contractors in {city} are adding $Xk/month with Owlbell")
+- Include urgency ("prices increase next month")
+- End with owlbell.xyz/pricing?ref=lead&f=2
+
+Sign as someone different from the previous two emails.
+NO greetings. Punchy and memorable."""
+
+FOLLOWUP_3_PROMPT = """Write a final follow-up email (max 80 words) for {business_name}, a {trade} contractor in {city}, {state}.
+
+This is the LAST email they'll get from us about Owlbell.
+
+The email should:
+- Be respectful and not pushy
+- Leave the door open
+- One last clear value proposition
+- End with owlbell.xyz/pricing?ref=lead&f=3
+
+Sign off. Make it clear this is the last time they'll hear from us.
+
+NO greetings. Brief and classy."""
+
 MODEL = "llama-3.3-70b-versatile"
 
 
@@ -191,3 +270,76 @@ async def personalize_lead(lead: dict[str, Any]) -> dict[str, Any]:
     if body:
         lead["_ai_body"] = body
     return lead
+
+
+async def score_lead(lead: dict[str, Any]) -> int:
+    """AI-powered lead scoring 1-10."""
+    prompt = SCORE_PROMPT.format(
+        name=lead.get("name", "Unknown"),
+        trade=lead.get("trade", "contractor"),
+        city=lead.get("city", "Unknown"),
+        state=lead.get("state", ""),
+        website=lead.get("website", "none"),
+        phone=lead.get("phone", "none"),
+        rating=lead.get("rating", 0),
+        review_count=lead.get("review_count", 0),
+        business_status=lead.get("business_status", "UNKNOWN"),
+    )
+    result = await _chat(
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        max_tokens=10,
+    )
+    if result:
+        try:
+            return max(1, min(10, int(result.strip())))
+        except ValueError:
+            pass
+    return 5
+
+
+async def generate_followup(lead: dict[str, Any], stage: int, days_since: int) -> Optional[str]:
+    """Generate an AI follow-up email for a lead at a given stage."""
+    prompts = {1: FOLLOWUP_1_PROMPT, 2: FOLLOWUP_2_PROMPT, 3: FOLLOWUP_3_PROMPT}
+    prompt_template = prompts.get(stage)
+    if not prompt_template:
+        return None
+
+    prompt = prompt_template.format(
+        business_name=lead.get("name", "your business"),
+        trade=lead.get("trade", "contractor"),
+        city=lead.get("city", "your area"),
+        state=lead.get("state", ""),
+        days_since=days_since,
+    )
+
+    return await _chat(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.8,
+        max_tokens=400,
+    )
+
+
+async def generate_subject(
+    business_name: str,
+    trade: str,
+    city: str,
+    stage: int = 0,
+) -> Optional[str]:
+    """Generate a unique subject line for a lead."""
+    stage_label = ["initial", "followup_1", "followup_2", "final"][min(stage, 3)]
+    prompt = f"""Write one short email subject line (max 8 words) for a cold email to {business_name}, a {trade} contractor in {city}.
+
+Stage: {stage_label}
+If initial: reference their business, NOT "missed calls"
+If follow-up: reference previous contact naturally
+
+No clickbait. No ALL CAPS. Sound like a person. One line only."""
+    return await _chat(
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.9,
+        max_tokens=30,
+    )
