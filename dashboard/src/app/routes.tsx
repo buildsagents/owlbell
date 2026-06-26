@@ -32,6 +32,7 @@ const AgencyClientsPage = lazy(() => import("@/pages/agency/clients"));
 const AgencyProvisionPage = lazy(() => import("@/pages/agency/provision"));
 const AgencyClientDetailPage = lazy(() => import("@/pages/agency/client/[clientId]"));
 const AgencyOnboardingPage = lazy(() => import("@/pages/agency/onboarding"));
+const OutreachPage = lazy(() => import("@/pages/outreach/index"));
 
 function PageLoader() {
   return (
@@ -141,15 +142,19 @@ export const router = createBrowserRouter([
         element: <BillingPage />,
       },
       {
-        path: "agency",
-        children: [
-          { index: true, element: <AgencyOverviewPage /> },
-          { path: "clients", element: <AgencyClientsPage /> },
-          { path: "provision", element: <AgencyProvisionPage /> },
-          { path: "client/:clientId", element: <AgencyClientDetailPage /> },
-          { path: "onboarding", element: <AgencyOnboardingPage /> },
-        ],
-      },
+          path: "agency",
+          children: [
+            { index: true, element: <AgencyOverviewPage /> },
+            { path: "clients", element: <AgencyClientsPage /> },
+            { path: "provision", element: <AgencyProvisionPage /> },
+            { path: "client/:clientId", element: <AgencyClientDetailPage /> },
+            { path: "onboarding", element: <AgencyOnboardingPage /> },
+          ],
+        },
+        {
+          path: "outreach",
+          element: <OutreachPage />,
+        },
     ],
   },
   {

@@ -11,7 +11,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 DIR = Path(__file__).parent
 CLIENT_SECRET_FILE = DIR / "client_secret.json"
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 ENV_VARS = {
     "INTEGRATION_GMAIL_CLIENT_ID": "",
     "INTEGRATION_GMAIL_CLIENT_SECRET": "",

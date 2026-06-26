@@ -94,6 +94,12 @@ export const API_ENDPOINTS = {
     assign: "/phone-numbers/assign",
     list: "/phone-numbers",
   },
+  leads: {
+    all: "/leads/all",
+    stats: "/leads/stats",
+    run: "/leads/run",
+    checkReplies: "/leads/check-replies",
+  },
 } as const;
 
 export interface NavItem {
@@ -124,6 +130,10 @@ export const SETTINGS_NAVIGATION: NavItem[] = [
 export const ADMIN_NAVIGATION: NavItem[] = [
   { label: "Team", path: "/team", icon: "users", requiredPermission: "team:read" },
   { label: "Billing", path: "/billing", icon: "credit-card", requiredPermission: "billing:read" },
+];
+
+export const OUTREACH_NAVIGATION: NavItem[] = [
+  { label: "Outreach", path: "/outreach", icon: "send" },
 ];
 
 export const AGENCY_NAVIGATION: NavItem[] = [

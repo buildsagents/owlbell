@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query
 from backend.leads.scraper import find_contractors, is_configured as scraper_configured
 from backend.leads.email_finder import find_emails_for_leads
 from backend.leads.outreach import send_initial_outreach, get_stats
+from backend.leads.reply_handler import handle_replies
 from backend.leads import lead_store
 
 router = APIRouter(prefix="/api/v1/leads", tags=["leads"])
@@ -84,6 +85,18 @@ async def run_pipeline(
         result["emails_sent"] = 0
 
     return {"status": "ok", "mode": "initial", **result}
+
+
+@router.post("/check-replies")
+async def check_replies_endpoint(secret: Optional[str] = Query(None)):
+    _verify_secret(secret)
+    return await handle_replies()
+
+
+@router.get("/all")
+async def get_all_leads(secret: Optional[str] = Query(None)):
+    _verify_secret(secret)
+    return lead_store.get_all_leads()
 
 
 @router.get("/stats")

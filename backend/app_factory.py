@@ -528,6 +528,11 @@ def _register_api_routers(app: FastAPI, settings: Settings) -> None:
         app.include_router(agency.router, prefix=API_PREFIX)
         app.include_router(client_portal.router, prefix=API_PREFIX)
         app.include_router(phone_numbers.router, prefix=API_PREFIX)
+
+        # Retell AI webhook receiver (UNAUTHENTICATED — verified by HMAC signature)
+        from api.routes import retell_webhooks
+        app.include_router(retell_webhooks.router, prefix=API_PREFIX)
+
         logger.info("app.routers.api.registered")
     except Exception as exc:
         logger.error("app.routers.api.failed", error=str(exc))
@@ -916,7 +921,11 @@ def create_app(env: Optional[str] = None, settings: Optional[Settings] = None) -
             "/api/v1/auth/magic-link",
             "/api/v1/auth/verify-email",
             "/api/v1/billing/webhook",
+            "/api/v1/billing/public-checkout",
+            "/api/v1/webhooks/retell",
             "/api/v1/leads/run",
+            "/api/v1/leads/all",
+            "/api/v1/leads/check-replies",
             "/api/v1/leads/stats",
             "/health",
             "/ready",

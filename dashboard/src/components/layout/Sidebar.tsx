@@ -8,6 +8,7 @@ import {
   SETTINGS_NAVIGATION,
   ADMIN_NAVIGATION,
   AGENCY_NAVIGATION,
+  OUTREACH_NAVIGATION,
 } from "@/lib/constants";
 import { hasPermission } from "@/lib/permissions";
 import {
@@ -28,6 +29,7 @@ import {
   PhoneCall,
   UserPlus,
   Layers,
+  Send,
 } from "lucide-react";
 import type { NavItem } from "@/lib/constants";
 
@@ -46,6 +48,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "credit-card": CreditCard,
   "user-plus": UserPlus,
   layers: Layers,
+  send: Send,
 };
 
 function NavIcon({ icon }: { icon: string }) {
@@ -146,6 +149,17 @@ export function Sidebar() {
         )}
         <div className="space-y-1">
           {AGENCY_NAVIGATION.map((item) => (
+            <SidebarNavItem key={item.path} item={item} collapsed={sidebarCollapsed} />
+          ))}
+        </div>
+
+        {!sidebarCollapsed && (
+          <p className="mb-2 mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Growth
+          </p>
+        )}
+        <div className="space-y-1">
+          {OUTREACH_NAVIGATION.map((item) => (
             <SidebarNavItem key={item.path} item={item} collapsed={sidebarCollapsed} />
           ))}
         </div>

@@ -22,6 +22,11 @@ def _save(data: dict[str, Any]) -> None:
     LEADS_FILE.write_text(json.dumps(data, indent=2, default=str), "utf-8")
 
 
+def get_all_leads() -> list[dict[str, Any]]:
+    data = _load()
+    return data["leads"]
+
+
 def get_lead(email: str) -> Optional[dict[str, Any]]:
     data = _load()
     for lead in data["leads"]:
@@ -89,13 +94,51 @@ def mark_follow_up_sent(email: str) -> None:
     _save(data)
 
 
-def mark_replied(email: str) -> None:
+def get_all_sent() -> list[dict[str, Any]]:
+    data = _load()
+    return [l for l in data["leads"] if l.get("status") == "sent"]
+
+
+def get_pending_send() -> list[dict[str, Any]]:
+    data = _load()
+    return [l for l in data["leads"] if l.get("status") == "new"]
+
+
+def add_reply(email: str, body: str, classification: str) -> None:
+    data = _load()
+    for lead in data["leads"]:
+        if lead["email"] == email:
+            lead.setdefault("replies", []).append({
+                "body": body,
+                "classification": classification,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            break
+    _save(data)
+
+
+def mark_unsubscribed(email: str) -> None:
+    data = _load()
+    for lead in data["leads"]:
+        if lead["email"] == email:
+            lead["status"] = "unsubscribed"
+            lead.setdefault("outcomes", []).append({
+                "type": "unsubscribed",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            break
+    _save(data)
+
+
+def mark_replied(email: str, note: str = "") -> None:
     data = _load()
     for lead in data["leads"]:
         if lead["email"] == email:
             lead["status"] = "replied"
+            lead["last_note"] = note
             lead.setdefault("outcomes", []).append({
                 "type": "replied",
+                "note": note,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             data["stats"]["total_replied"] = data["stats"].get("total_replied", 0) + 1
