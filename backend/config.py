@@ -522,8 +522,8 @@ class IntegrationSettings(BaseSettings):
     gmail_from_email: str = "buildsagents@gmail.com"
     gmail_from_name: str = "Owlbell"
 
-    # Gemini AI (for personalized email content and reply handling)
-    gemini_api_key: Optional[SecretStr] = None
+    # OpenAI (for AI-powered email personalization, reply handling, and classification)
+    openai_api_key: Optional[SecretStr] = None
 
     # Gmail SMTP (fallback for local dev — blocked on Railway)
     smtp_host: str = "smtp.gmail.com"

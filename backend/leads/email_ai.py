@@ -1,12 +1,11 @@
-"""AI-powered email personalization and reply handling using Gemini."""
+"""AI-powered email personalization and reply handling using OpenAI."""
 
 from __future__ import annotations
 
 from typing import Any, Optional
 
 import structlog
-from google import genai
-from google.genai import types as genai_types
+from openai import AsyncOpenAI
 
 from backend.config import get_settings
 
@@ -74,19 +73,38 @@ Guidelines:
 - Sound like a real person, not a sales bot
 - Sign with a random name from: Mike, Dave, Chris, Pat, Steve, Tony, Jesse, Ryan"""
 
+MODEL = "gpt-4o-mini"
 
-def _get_client() -> Optional[genai.Client]:
+
+def _get_client() -> Optional[AsyncOpenAI]:
     s = get_settings()
-    key = s.integrations.gemini_api_key
+    key = s.integrations.openai_api_key
     if not key:
         return None
     if hasattr(key, "get_secret_value"):
         key = key.get_secret_value()
-    return genai.Client(api_key=key)
+    return AsyncOpenAI(api_key=key)
 
 
 def is_configured() -> bool:
-    return bool(get_settings().integrations.gemini_api_key)
+    return bool(get_settings().integrations.openai_api_key)
+
+
+async def _chat(messages: list[dict], temperature: float = 0.7, max_tokens: int = 500) -> Optional[str]:
+    client = _get_client()
+    if not client:
+        return None
+    try:
+        response = await client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as exc:
+        logger.error("ai.chat_error", error=str(exc))
+        return None
 
 
 async def generate_email(
@@ -96,10 +114,6 @@ async def generate_email(
     state: str,
     website: Optional[str] = None,
 ) -> Optional[str]:
-    client = _get_client()
-    if not client:
-        return None
-
     business_context = f"{trade} contractor in {city}, {state}"
     if website:
         business_context += f". Website: {website}"
@@ -112,38 +126,24 @@ async def generate_email(
         business_context=business_context,
     )
 
-    try:
-        response = await client.aio.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                temperature=0.8,
-                max_output_tokens=500,
-            ),
-        )
-        return response.text.strip()
-    except Exception as exc:
-        logger.error("ai.generate_email_error", business=business_name, error=str(exc))
-        return None
+    return await _chat(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.8,
+        max_tokens=500,
+    )
 
 
 async def classify_reply(reply_text: str) -> str:
-    client = _get_client()
-    if not client:
-        return "neutral"
-
     prompt = REPLY_CLASSIFY_PROMPT.format(reply=reply_text)
-    try:
-        response = await client.aio.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt,
-            config=genai_types.GenerateContentConfig(temperature=0.1, max_output_tokens=20),
-        )
-        return response.text.strip().lower()
-    except Exception as exc:
-        logger.error("ai.classify_error", error=str(exc))
-        return "neutral"
+    result = await _chat(
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        max_tokens=20,
+    )
+    return result.lower() if result else "neutral"
 
 
 async def generate_reply(
@@ -154,10 +154,6 @@ async def generate_reply(
     reply_text: str,
     classification: str,
 ) -> Optional[str]:
-    client = _get_client()
-    if not client:
-        return None
-
     prompt = RESPONSE_PROMPT.format(
         business_name=business_name,
         trade=trade,
@@ -167,20 +163,14 @@ async def generate_reply(
         classification=classification,
     )
 
-    try:
-        response = await client.aio.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                temperature=0.7,
-                max_output_tokens=500,
-            ),
-        )
-        return response.text.strip()
-    except Exception as exc:
-        logger.error("ai.generate_reply_error", business=business_name, error=str(exc))
-        return None
+    return await _chat(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.7,
+        max_tokens=500,
+    )
 
 
 async def personalize_lead(lead: dict[str, Any]) -> dict[str, Any]:
