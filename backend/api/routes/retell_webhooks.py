@@ -253,6 +253,20 @@ async def _handle_call_analyzed(payload: dict[str, Any]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Test page — serves the browser-based receptionist test UI
+# ---------------------------------------------------------------------------
+
+
+@router.get("/test-call", include_in_schema=False)
+async def serve_test_page():
+    """Serve the receptionist test HTML page."""
+    from pathlib import Path
+    from fastapi.responses import HTMLResponse
+    html = Path(__file__).parent.parent.parent / "receptionist-test.html"
+    return HTMLResponse(content=html.read_text(encoding="utf-8"))
+
+
+# ---------------------------------------------------------------------------
 # Test endpoint — creates a Retell web call and returns the access token
 # ---------------------------------------------------------------------------
 
