@@ -18,6 +18,7 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 import uuid
@@ -200,6 +201,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     except Exception as exc:
         logger.warning("app.startup.redis_warmup.failed", error=str(exc))
 
+    # -- 9. Start lead pipeline scheduler -----------------------------------
+    app.state.scheduler_tasks = []
+    if settings.env != "testing":
+        try:
+            from backend.leads.scheduler import start_scheduler
+
+            scheduler_tasks = await start_scheduler(app)
+            app.state.scheduler_tasks = scheduler_tasks
+            if scheduler_tasks:
+                logger.info("app.startup.scheduler.ok", count=len(scheduler_tasks))
+            else:
+                logger.info("app.startup.scheduler.skipped")
+        except Exception as exc:
+            logger.warning("app.startup.scheduler.failed", error=str(exc))
+
     # -- Track state --------------------------------------------------------
     app.state.start_time = time.perf_counter()
     app.state.request_count = 0
@@ -227,6 +243,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             logger.info("app.shutdown.call_handoff")
     except Exception as exc:
         logger.error("app.shutdown.call_handoff_failed", error=str(exc))
+
+    # Cancel scheduler background tasks
+    scheduler_tasks = getattr(app.state, "scheduler_tasks", [])
+    for task in scheduler_tasks:
+        task.cancel()
+    if scheduler_tasks:
+        await asyncio.gather(*scheduler_tasks, return_exceptions=True)
+        logger.info("app.shutdown.scheduler.cancelled", count=len(scheduler_tasks))
 
     # Close all dependencies
     try:

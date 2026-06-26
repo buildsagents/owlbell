@@ -19,6 +19,7 @@ Design notes
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 import structlog
@@ -229,6 +230,14 @@ async def handle_event(event: Any, db: Optional[AsyncSession] = None) -> dict[st
             email=(data.get("customer_details") or {}).get("email"),
         )
         action = "provisioned"
+
+        # Send purchase alert to configured email
+        await _send_purchase_alert(
+            plan=meta.get("plan", "unknown"),
+            customer_email=(data.get("customer_details") or {}).get("email", "unknown"),
+            amount=(data.get("amount_total") or 0) / 100,
+            currency=data.get("currency", "usd"),
+        )
     elif etype == "invoice.paid":
         await _mark_active(db=db, customer_id=data.get("customer"))
         action = "marked_active"
@@ -241,6 +250,47 @@ async def handle_event(event: Any, db: Optional[AsyncSession] = None) -> dict[st
 
     logger.info("billing.webhook", event_type=etype, action=action)
     return {"event_type": etype, "action": action}
+
+
+async def _send_purchase_alert(
+    *,
+    plan: str,
+    customer_email: str,
+    amount: float,
+    currency: str,
+) -> None:
+    """Send a Gmail notification about a new Stripe purchase."""
+    settings = get_settings().integrations
+    alert_email = settings.stripe_purchase_alert_email
+    if not alert_email:
+        return
+
+    try:
+        from backend.integrations.gmail.service import send_email, is_configured
+
+        if not is_configured():
+            logger.warning("billing.purchase_alert.gmail_not_configured")
+            return
+
+        plan_label = MANAGED_PLANS.get(plan, {}).get("name", plan.capitalize())
+        result = await send_email(
+            to_email=alert_email,
+            to_name="Owlbell Admin",
+            subject=f"🎉 New {plan_label} Purchase — ${amount:.2f} {currency.upper()}",
+            body_text=(
+                f"New Stripe purchase received!\n\n"
+                f"Plan: {plan_label}\n"
+                f"Customer Email: {customer_email}\n"
+                f"Amount: ${amount:.2f} {currency.upper()}\n"
+                f"Time: {datetime.now(timezone.utc).isoformat()}\n"
+            ),
+        )
+        if result.get("success"):
+            logger.info("billing.purchase_alert.sent", plan=plan, email=customer_email)
+        else:
+            logger.warning("billing.purchase_alert.failed", error=result.get("error"))
+    except Exception as exc:
+        logger.error("billing.purchase_alert.error", error=str(exc))
 
 
 # --------------------------------------------------------------------------- #

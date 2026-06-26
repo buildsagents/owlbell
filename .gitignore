@@ -28,6 +28,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Secrets
+backend/integrations/gmail/client_secret.json
+
 # Workspace
 memory/
 

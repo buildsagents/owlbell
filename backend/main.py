@@ -723,7 +723,29 @@ def create_main_app() -> FastAPI:
                 errors=startup_errors,
             )
 
+        # Start lead pipeline scheduler
+        app.state.scheduler_tasks = []
+        if _settings.env != "testing":
+            try:
+                from backend.leads.scheduler import start_scheduler
+
+                scheduler_tasks = await start_scheduler(app)
+                app.state.scheduler_tasks = scheduler_tasks
+                if scheduler_tasks:
+                    logger.info("main.lifespan.scheduler.ok", count=len(scheduler_tasks))
+            except Exception as exc:
+                logger.warning("main.lifespan.scheduler.failed", error=str(exc))
+
         yield
+
+        # Cancel scheduler background tasks
+        scheduler_tasks = getattr(app.state, "scheduler_tasks", [])
+        for task in scheduler_tasks:
+            task.cancel()
+        if scheduler_tasks:
+            import asyncio
+            await asyncio.gather(*scheduler_tasks, return_exceptions=True)
+            logger.info("main.lifespan.scheduler.cancelled", count=len(scheduler_tasks))
 
         # Run subsystem shutdown
         logger.info("main.lifespan.shutdown")

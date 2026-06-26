@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Owlbell Receptionist Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .container { background: #1e293b; border-radius: 16px; padding: 32px; width: 480px; box-shadow: 0 25px 50px rgba(0,0,0,.5); }
+  h1 { font-size: 22px; margin-bottom: 8px; }
+  p.sub { color: #94a3b8; margin-bottom: 24px; font-size: 14px; }
+  .status { background: #0f172a; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; }
+  .status .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .status .dot.idle { background: #64748b; }
+  .status .dot.connecting { background: #f59e0b; animation: pulse 1s infinite; }
+  .status .dot.connected { background: #22c55e; }
+  .status .dot.error { background: #ef4444; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  #statusText { font-size: 15px; font-weight: 500; }
+  .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-start { background: #22c55e; color: #052e16; }
+  .btn-start:hover:not(:disabled) { background: #16a34a; }
+  .btn-stop { background: #ef4444; color: #450a0a; }
+  .btn-stop:hover:not(:disabled) { background: #dc2626; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .transcript { background: #0f172a; border-radius: 12px; padding: 16px; margin-top: 20px; max-height: 260px; overflow-y: auto; font-size: 13px; line-height: 1.6; }
+  .transcript .msg { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; }
+  .transcript .msg.agent { background: #1e3a5f; }
+  .transcript .msg.user { background: #3b1f3b; }
+  .transcript .msg .speaker { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+  .transcript .msg.agent .speaker { color: #60a5fa; }
+  .transcript .msg.user .speaker { color: #f472b6; }
+  .info { font-size: 12px; color: #64748b; margin-top: 16px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Owlbell Receptionist</h1>
+  <p class="sub" id="agentInfo">Agent: Owlbell Receptionist</p>
+
+  <div class="status">
+    <span class="dot idle" id="statusDot"></span>
+    <span id="statusText">Ready to test</span>
+  </div>
+
+  <button class="btn btn-start" id="callBtn" onclick="toggleCall()">Start Call</button>
+
+  <div class="transcript" id="transcript">
+    <div style="color:#64748b;text-align:center;padding:20px">Call transcript will appear here...</div>
+  </div>
+
+  <div class="info" id="callIdDisplay"></div>
+</div>
+
+<script src="https://unpkg.com/retell-client-js-sdk@latest/retell-client-sdk.js"></script>
+<script>
+const AGENT_ID = 'agent_233aac32d03d073ad7774a5ca2';
+const API_BASE = 'https://owlbell-api-production.up.railway.app';
+let client = null;
+let isCallActive = false;
+
+function setStatus(text, state) {
+  document.getElementById('statusText').textContent = text;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'dot ' + state;
+}
+
+async function getAccessToken() {
+  const resp = await fetch(`${API_BASE}/api/v1/webhooks/retell/test-token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agent_id: AGENT_ID })
+  });
+  if (!resp.ok) throw new Error('Failed to get access token');
+  const data = await resp.json();
+  return data.access_token;
+}
+
+async function toggleCall() {
+  const btn = document.getElementById('callBtn');
+  if (isCallActive) {
+    if (client) client.stopCall();
+    return;
+  }
+
+  btn.disabled = true;
+  setStatus('Connecting...', 'connecting');
+
+  try {
+    // Create web call via our backend
+    const resp = await fetch(`${API_BASE}/api/v1/webhooks/retell/test-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agent_id: AGENT_ID,
+        dynamic_variables: {
+          business_name: "Test Company",
+          business_hours: "Monday to Friday, 8 AM to 6 PM",
+          services: "HVAC repair, plumbing, electrical",
+          pricing_info: "Free estimates. Pricing varies by job.",
+          booking_link: "https://calendly.com/test-company",
+          business_address: "123 Main St, Austin, TX",
+          business_phone: "+15125551234",
+          transfer_number: "+15125559876",
+          faq_emergency_contacts: "For emergencies, call 911."
+        }
+      })
+    });
+    if (!resp.ok) throw new Error('Failed to create web call');
+    const data = await resp.json();
+
+    document.getElementById('callIdDisplay').textContent = 'Call ID: ' + data.call_id;
+
+    client = new RetellWebClient();
+    client.on('call_started', () => {
+      setStatus('Connected — speak now!', 'connected');
+      btn.textContent = 'End Call';
+      btn.className = 'btn btn-stop';
+      btn.disabled = false;
+      isCallActive = true;
+      addMessage('Agent is speaking...', 'agent');
+    });
+    client.on('call_ended', () => {
+      onCallEnded();
+    });
+    client.on('agent_start_talking', () => {
+      setStatus('Agent is speaking', 'connected');
+    });
+    client.on('agent_stop_talking', () => {
+      setStatus('Listening...', 'connected');
+    });
+    client.on('update', (update) => {
+      if (update.transcript) {
+        const lines = update.transcript.split('\n').filter(l => l.trim());
+        document.getElementById('transcript').innerHTML = lines.map(l => {
+          const isAgent = l.startsWith('Agent:') || l.startsWith('agent:');
+          const speaker = isAgent ? 'Agent' : 'You';
+          const text = l.replace(/^(Agent|User|agent|user):\s*/, '');
+          return `<div class="msg ${isAgent ? 'agent' : 'user'}"><div class="speaker">${speaker}</div>${text}</div>`;
+        }).join('');
+      }
+    });
+    client.on('error', (err) => {
+      console.error('Error:', err);
+      setStatus('Error occurred', 'error');
+    });
+
+    await client.startCall({ accessToken: data.access_token });
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to connect: ' + err.message, 'error');
+    btn.textContent = 'Start Call';
+    btn.className = 'btn btn-start';
+    btn.disabled = false;
+    isCallActive = false;
+  }
+}
+
+function onCallEnded() {
+  setStatus('Call ended', 'idle');
+  const btn = document.getElementById('callBtn');
+  btn.textContent = 'Start Call';
+  btn.className = 'btn btn-start';
+  btn.disabled = false;
+  isCallActive = false;
+  client = null;
+}
+
+function addMessage(text, type) {
+  const el = document.getElementById('transcript');
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + type;
+  msg.innerHTML = `<div class="speaker">${type === 'agent' ? 'Agent' : 'You'}</div>${text}`;
+  if (el.querySelector('[style]')) el.innerHTML = '';
+  el.appendChild(msg);
+  el.scrollTop = el.scrollHeight;
+}
+</script>
+</body>
+</html>

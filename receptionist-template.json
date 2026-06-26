@@ -1,0 +1,56 @@
+{
+  "template_name": "owlbell-inbound-receptionist",
+  "template_version": "1.0.0",
+  "created": "2026-06-26T09:23:58.430840Z",
+  "description": "Inbound receptionist for home-services businesses (HVAC, plumbing, roofing, electrical, etc.)",
+  "variables": {
+    "business_name": {
+      "type": "string",
+      "default": "",
+      "description": "Business name"
+    },
+    "business_hours": {
+      "type": "string",
+      "default": "Monday to Friday, 8 AM to 6 PM",
+      "description": "Hours of operation"
+    },
+    "services": {
+      "type": "string",
+      "default": "HVAC repair, plumbing, electrical",
+      "description": "Comma-separated list of services"
+    },
+    "pricing_info": {
+      "type": "string",
+      "default": "We offer free estimates. Pricing varies by job.",
+      "description": "Pricing description"
+    },
+    "booking_link": {
+      "type": "string",
+      "default": "",
+      "description": "Booking URL (Calendly, Cal.com, etc.)"
+    },
+    "business_address": {
+      "type": "string",
+      "default": "",
+      "description": "Physical address"
+    },
+    "business_phone": {
+      "type": "string",
+      "default": "",
+      "description": "Business phone number"
+    },
+    "transfer_number": {
+      "type": "string",
+      "default": "",
+      "description": "Number to transfer calls to"
+    },
+    "faq_emergency_contacts": {
+      "type": "string",
+      "default": "For emergencies, call 911.",
+      "description": "Emergency contact instructions"
+    }
+  },
+  "llm_id": "llm_5ee8f9973b7c963225f12f7e8caf",
+  "knowledge_base_id": "knowledge_base_163fdb7f5c963c4a",
+  "agent_id": "agent_233aac32d03d073ad7774a5ca2"
+}

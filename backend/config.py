@@ -564,6 +564,9 @@ class IntegrationSettings(BaseSettings):
     stripe_price_setup_basic: Optional[str] = None
     stripe_price_setup_pro: Optional[str] = None
 
+    # Purchase alert notification email (receives notification on every Stripe purchase)
+    stripe_purchase_alert_email: Optional[str] = None
+
     # Retell AI (for phone provisioning and AI agents)
     retell_api_key: Optional[SecretStr] = None
     retell_webhook_secret: Optional[SecretStr] = None
