@@ -1,60 +1,81 @@
 "use client";
 
-const CONTACT_EMAIL = "hello@owlbell.xyz";
-const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL;
+import { useState } from "react";
+import { FASTAPI_V1 } from "@/lib/consolidation";
+import {
+  formatSetupFee,
+  getCheckoutDisplay,
+  type CheckoutPlanId,
+} from "@/lib/checkout-display";
 
-const PLANS = [
+type PlanCard = {
+  id: CheckoutPlanId;
+  name: string;
+  price: number;
+  priceSuffix: string;
+  setupFee: number | null;
+  subtitle: string;
+  highlighted: boolean;
+  badge?: string;
+  cta: string;
+  features: string[];
+};
+
+const PLANS: PlanCard[] = [
   {
-    id: "launch",
+    id: "basic",
     name: "Launch",
     price: 1497,
-    period: "/mo",
-    subtitle: "For one-location operators who need the phones handled now",
+    priceSuffix: "/mo",
+    setupFee: null,
+    subtitle: "For owner-operators who need every call answered without hiring.",
     highlighted: false,
-    cta: "Apply for Launch",
+    cta: "Start 7-Day Trial",
     features: [
-      "AI receptionist configured for your business",
-      "Call answering, lead capture, and instant owner alerts",
-      "One phone number or call-forwarding setup",
-      "Emergency routing rules",
-      "Weekly script tuning for the first month",
+      "AI receptionist trained on your business and service area",
+      "24/7 call answering, lead capture, and instant owner alerts",
+      "One number or call-forwarding setup — we handle the wiring",
+      "Emergency routing rules for after-hours and urgent jobs",
+      "Script tuning during your first 30 days",
     ],
   },
   {
-    id: "growth",
+    id: "pro",
     name: "Growth",
     price: 4997,
-    period: "/mo",
-    subtitle: "The core offer for serious service companies",
+    priceSuffix: "/mo",
+    setupFee: 1997,
+    subtitle: "The flagship managed system for companies serious about recovered revenue.",
     highlighted: true,
-    badge: "Core Offer",
-    cta: "Book Growth Strategy Call",
+    badge: "Most Popular",
+    cta: "Start 7-Day Trial",
     features: [
       "Everything in Launch",
       "Calendar booking and missed-call recovery workflow",
       "CRM or job-management handoff",
       "Advanced routing for after-hours and emergency calls",
       "Monthly revenue review and conversion tuning",
-      "Priority support",
+      "Priority support with a dedicated success contact",
     ],
   },
   {
-    id: "scale",
+    id: "pro_plus",
     name: "Scale",
     price: 9997,
-    period: "+/mo",
-    subtitle: "For multi-location or high-volume teams",
+    priceSuffix: "+/mo",
+    setupFee: 1997,
+    subtitle: "For multi-location teams and high-volume operators who need white-glove rollout.",
     highlighted: false,
-    cta: "Talk to Sales",
+    cta: "Subscribe Now",
     features: [
       "Everything in Growth",
       "Multiple locations, numbers, and routing trees",
-      "Custom reporting and SLA options",
-      "Dedicated success lead",
-      "Quarterly workflow rebuilds",
+      "Custom reporting, SLAs, and escalation paths",
+      "Dedicated success lead and quarterly workflow rebuilds",
+      "Volume pricing available for enterprise rollouts",
     ],
   },
-] as const;
+];
 
 function CheckIcon() {
   return (
@@ -68,98 +89,182 @@ function CheckIcon() {
   );
 }
 
-function openApplication(plan: string) {
-  const subject = encodeURIComponent(`Owlbell ${plan} application`);
-  const body = encodeURIComponent(
-    [
-      `I'm interested in Owlbell ${plan}.`,
-      "",
-      "Business name:",
-      "Website:",
-      "Service area:",
-      "Average missed calls per week:",
-      "Average job value:",
-      "Current booking / CRM system:",
-    ].join("\n")
-  );
+export default function PricingSection() {
+  const [modalPlan, setModalPlan] = useState<CheckoutPlanId | null>(null);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (BOOKING_URL) {
-    window.open(BOOKING_URL, "_blank", "noopener,noreferrer");
-    return;
+  const checkout = modalPlan ? getCheckoutDisplay(modalPlan) : null;
+
+  function openCheckout(planId: CheckoutPlanId) {
+    setModalPlan(planId);
+    setEmail("");
+    setError(null);
   }
 
-  window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-}
+  function closeModal() {
+    if (loading) return;
+    setModalPlan(null);
+    setError(null);
+  }
 
-export default function PricingSection() {
+  async function handleCheckout(e: React.FormEvent) {
+    e.preventDefault();
+    if (!modalPlan || !email.trim()) return;
+
+    setLoading(true);
+    setError(null);
+
+    const display = getCheckoutDisplay(modalPlan);
+
+    try {
+      const res = await fetch(`${FASTAPI_V1}/billing/public-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: modalPlan,
+          period: "monthly",
+          email: email.trim(),
+          founding: false,
+          include_setup_fee: display.includeSetupFee,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          json?.detail || json?.message || "Checkout unavailable. Please try again."
+        );
+      }
+
+      const url = json?.data?.url;
+      if (!url) {
+        throw new Error("No checkout URL returned. Please contact support.");
+      }
+
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setLoading(false);
+    }
+  }
+
   return (
-    <section className="section section--last" id="pricing">
-      <div className="wrap">
-        <header className="section-header">
-          <span className="section-eyebrow section-eyebrow--pill">Implementation</span>
-          <h2>Pricing Built Around Recovered Revenue</h2>
-          <p>
-            This is not a cheap answering widget. Owlbell is a managed phone
-            conversion system for companies where missed calls are already
-            costing real money.
-          </p>
-        </header>
+    <>
+      <section className="section section--last" id="pricing">
+        <div className="wrap">
+          <header className="section-header">
+            <span className="section-eyebrow section-eyebrow--pill">Pricing</span>
+            <h2>Managed Phone Conversion — Priced Like the Revenue It Recovers</h2>
+            <p>
+              Owlbell is not a DIY chatbot. It is a done-for-you call conversion
+              system with human setup, script tuning, and ongoing optimization —
+              built for plumbing and trades companies where one missed call is a
+              $400+ job walking out the door.
+            </p>
+          </header>
 
-        <div className="pricing-grid">
-          {PLANS.map((plan) => (
-            <article
-              key={plan.id}
-              className={`pricing-card agency-card${plan.highlighted ? " pricing-card--featured" : ""}`}
-            >
-              {plan.highlighted && "badge" in plan && (
-                <span className="pricing-popular">{plan.badge}</span>
-              )}
-              <h3 className="pricing-plan-name">{plan.name}</h3>
-              <div className="pricing-price">
-                <span className="pricing-amount">${plan.price.toLocaleString()}</span>
-                <span className="pricing-period">{plan.period}</span>
-              </div>
-              <p className="pricing-subtitle">{plan.subtitle}</p>
-              <ul className="pricing-features">
-                {plan.features.map((feature) => (
-                  <li key={feature}>
-                    <span className="pricing-check">
-                      <CheckIcon />
-                    </span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                className={`agency-btn ${plan.highlighted ? "agency-btn--primary" : "agency-btn--secondary"} agency-btn--block`}
-                onClick={() => openApplication(plan.name)}
+          <div className="pricing-grid">
+            {PLANS.map((plan) => (
+              <article
+                key={plan.id}
+                className={`pricing-card agency-card${plan.highlighted ? " pricing-card--featured" : ""}`}
               >
-                {plan.cta}
-              </button>
-            </article>
-          ))}
-        </div>
-
-        <div className="pricing-founding" id="founding-offer">
-          <div className="pricing-founding-copy">
-            <strong>Founding Growth Sprint</strong>
-            <span className="pricing-founding-headline">
-              $1,000/mo credit for the first 3 months
-            </span>
-            <span className="pricing-founding-sub">
-              For qualified Growth clients who allow a testimonial or anonymized case study
-            </span>
+                {plan.highlighted && plan.badge && (
+                  <span className="pricing-popular">{plan.badge}</span>
+                )}
+                <h3 className="pricing-plan-name">{plan.name}</h3>
+                <div className="pricing-price">
+                  <span className="pricing-amount">
+                    ${plan.price.toLocaleString()}
+                  </span>
+                  <span className="pricing-period">{plan.priceSuffix}</span>
+                </div>
+                {plan.setupFee !== null && (
+                  <p className="pricing-setup-fee">
+                    + {formatSetupFee(plan.setupFee)}
+                  </p>
+                )}
+                <p className="pricing-subtitle">{plan.subtitle}</p>
+                <ul className="pricing-features">
+                  {plan.features.map((feature) => (
+                    <li key={feature}>
+                      <span className="pricing-check">
+                        <CheckIcon />
+                      </span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className={`agency-btn ${plan.highlighted ? "agency-btn--primary" : "agency-btn--secondary"} agency-btn--block`}
+                  onClick={() => openCheckout(plan.id)}
+                >
+                  {plan.cta}
+                </button>
+              </article>
+            ))}
           </div>
-          <button
-            type="button"
-            className="agency-btn agency-btn--light"
-            onClick={() => openApplication("Growth Founding Sprint")}
-          >
-            Apply for a Founding Slot
-          </button>
+
+          <p className="pricing-footnote">
+            All plans include a 7-day trial. Self-serve checkout — subscribe in
+            minutes, no sales call required. Cancel anytime during trial.
+          </p>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {modalPlan && checkout && (
+        <div
+          className="pricing-modal-overlay"
+          role="presentation"
+          onClick={closeModal}
+        >
+          <div
+            className="pricing-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pricing-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="pricing-modal-close"
+              onClick={closeModal}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+            <h3 id="pricing-modal-title">{checkout.modalTitle}</h3>
+            <p>{checkout.modalNote}</p>
+            <form onSubmit={handleCheckout}>
+              <label htmlFor="checkout-email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="checkout-email"
+                type="email"
+                placeholder="you@yourcompany.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+                disabled={loading}
+              />
+              {error && <p className="pricing-modal-error">{error}</p>}
+              <button
+                type="submit"
+                className="agency-btn agency-btn--primary agency-btn--block"
+                disabled={loading || !email.trim()}
+              >
+                {loading ? "Redirecting to Stripe…" : checkout.buttonText}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

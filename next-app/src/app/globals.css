@@ -75,6 +75,18 @@ body {
   padding: 0 var(--wrap-pad);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -1463,6 +1475,23 @@ summary:focus-visible {
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--muted);
+}
+
+.pricing-setup-fee {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand-dark);
+  margin: 0 0 var(--space-2);
+  letter-spacing: -0.01em;
+}
+
+.pricing-footnote {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 52ch;
+  margin: 0 auto;
 }
 
 .pricing-subtitle {

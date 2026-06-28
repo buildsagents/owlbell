@@ -1,50 +1,50 @@
 export type CheckoutPlanId = "basic" | "pro" | "pro_plus";
 
-export const CHECKOUT_RATES: Record<
-  CheckoutPlanId,
-  { label: string; standard: number; founding: number }
-> = {
-  basic: { label: "Launch", standard: 1497, founding: 997 },
-  pro: { label: "Growth", standard: 4997, founding: 3997 },
-  pro_plus: { label: "Scale", standard: 9997, founding: 7997 },
+export type PricingPlanConfig = {
+  id: CheckoutPlanId;
+  name: string;
+  monthly: number;
+  setupFee: number | null;
+  customPricing?: boolean;
 };
 
-export const FOUNDING_PROMO_CODE = "FOUNDING50";
+export const PRICING_PLANS: PricingPlanConfig[] = [
+  { id: "basic", name: "Launch", monthly: 1497, setupFee: null },
+  { id: "pro", name: "Growth", monthly: 4997, setupFee: 1997 },
+  { id: "pro_plus", name: "Scale", monthly: 9997, setupFee: 1997, customPricing: true },
+];
 
 export function normalizePlanId(plan: string): CheckoutPlanId {
   if (plan === "basic" || plan === "pro" || plan === "pro_plus") return plan;
   return "pro";
 }
 
-export function getCheckoutDisplay(plan: string, founding = false) {
+export function getPlanConfig(plan: string): PricingPlanConfig {
   const id = normalizePlanId(plan);
-  const rates = CHECKOUT_RATES[id];
-  const monthly = founding ? rates.founding : rates.standard;
+  return PRICING_PLANS.find((p) => p.id === id) ?? PRICING_PLANS[1];
+}
+
+export function getCheckoutDisplay(plan: string) {
+  const config = getPlanConfig(plan);
   return {
-    planId: id,
-    planLabel: rates.label,
-    monthly,
-    founding,
-    buttonText: founding
-      ? `Subscribe — ${rates.label} founding $${monthly}/mo`
-      : `Subscribe — $${monthly}/mo`,
-    foundingNote: founding
-      ? `Founding plumber rate (50% off first 3 months). Promo ${FOUNDING_PROMO_CODE} applied at Stripe checkout when available.`
-      : null,
+    planId: config.id,
+    planLabel: config.name,
+    monthly: config.monthly,
+    setupFee: config.setupFee,
+    includeSetupFee: config.setupFee !== null,
+    buttonText: `Start 7-Day Trial — ${config.name}`,
+    modalTitle: `Subscribe to ${config.name}`,
+    modalNote:
+      config.setupFee !== null
+        ? `$${config.monthly.toLocaleString()}/mo after your trial. One-time setup fee of $${config.setupFee.toLocaleString()} due at checkout.`
+        : `$${config.monthly.toLocaleString()}/mo after your trial. No setup fee on Launch.`,
   };
 }
 
-export const FOUNDING_SLOTS = { total: 20, remaining: 12 } as const;
-
-export function foundingSlotsFillPercent(): number {
-  return (FOUNDING_SLOTS.remaining / FOUNDING_SLOTS.total) * 100;
-}
-
 export function formatMonthlyPrice(amount: number): string {
-  return `$${amount}/mo`;
+  return `$${amount.toLocaleString()}/mo`;
 }
 
-export function foundingThreeMonthSavings(plan: CheckoutPlanId): number {
-  const rates = CHECKOUT_RATES[plan];
-  return 3 * (rates.standard - rates.founding);
+export function formatSetupFee(amount: number): string {
+  return `$${amount.toLocaleString()} one-time setup`;
 }

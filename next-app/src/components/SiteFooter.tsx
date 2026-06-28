@@ -2,7 +2,7 @@ const FOOTER_LINKS = [
   { id: "how", label: "How it works" },
   { id: "dashboard", label: "Dashboard" },
   { id: "honest-math", label: "ROI" },
-  { id: "pricing", label: "Implementation" },
+  { id: "pricing", label: "Pricing" },
 ];
 
 export default function SiteFooter() {
