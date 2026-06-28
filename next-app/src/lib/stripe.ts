@@ -16,7 +16,7 @@ export const stripe = process.env.STRIPE_SECRET_KEY
 // Plan → Stripe Price ID mapping
 // Set these in .env.local after creating products in your Stripe dashboard.
 // ---------------------------------------------------------------------------
-export const STRIPE_PRICE_IDS: Record<Exclude<PlanTier, 'enterprise'>, string | undefined> = {
+export const STRIPE_PRICE_IDS: Record<PlanTier, string | undefined> = {
   basic:    process.env.STRIPE_PRICE_BASIC,
   pro:      process.env.STRIPE_PRICE_PRO,
   pro_plus: process.env.STRIPE_PRICE_PRO_PLUS,
@@ -32,7 +32,7 @@ export async function createCheckoutSession({
   successUrl,
   cancelUrl,
 }: {
-  plan: Exclude<PlanTier, 'enterprise'>;
+  plan: PlanTier;
   orgId: string;
   customerEmail?: string;
   successUrl: string;

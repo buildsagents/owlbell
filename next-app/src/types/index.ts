@@ -14,7 +14,7 @@ export interface Profile {
   created_at: string;
 }
 
-export type PlanTier = 'basic' | 'pro' | 'pro_plus' | 'enterprise';
+export type PlanTier = 'basic' | 'pro' | 'pro_plus';
 
 export interface Subscription {
   id: string;
@@ -73,31 +73,44 @@ export interface Call {
 export const PLAN_DETAILS: Record<PlanTier, {
   name: string;
   price: number;
-  callLimit: number;
+  setupFee: number | null;
   features: string[];
 }> = {
   basic: {
     name: 'Launch',
     price: 1497,
-    callLimit: 1500,
-    features: ['Done-for-you AI call answering', 'Up to 1,500 calls/mo', 'Voicemail → text + email', 'Instant message alerts', '1 phone number', 'White-glove onboarding'],
+    setupFee: null,
+    features: [
+      'Agency-configured receptionist trained on your business',
+      '24/7 call answering, lead capture, and owner alerts',
+      'One number or call-forwarding setup',
+      'Emergency routing rules',
+      'Script tuning during first 30 days',
+    ],
   },
   pro: {
     name: 'Growth',
     price: 4997,
-    callLimit: 5000,
-    features: ['Everything in Launch', 'Up to 5,000 calls/mo', 'Appointment booking + calendar', 'CRM integration & call routing', 'Analytics dashboard · 3 numbers', 'Priority support'],
+    setupFee: 5000,
+    features: [
+      'Everything in Launch',
+      'Calendar booking and missed-call recovery',
+      'CRM or job-management handoff',
+      'Advanced after-hours and emergency routing',
+      'Monthly revenue review and conversion tuning',
+      'Priority support with dedicated success contact',
+    ],
   },
   pro_plus: {
     name: 'Scale',
     price: 9997,
-    callLimit: 15000,
-    features: ['Everything in Growth', 'Up to 15,000 calls/mo', 'Advanced analytics', 'Multi-location workflows', 'Dedicated success lead', 'SLA options'],
-  },
-  enterprise: {
-    name: 'Enterprise',
-    price: 0,
-    callLimit: -1,
-    features: ['Multi-location', 'Advanced AI agents', 'White-label', 'Priority support + SLA', 'Dedicated onboarding'],
+    setupFee: 10000,
+    features: [
+      'Everything in Growth',
+      'Multiple locations, numbers, and routing trees',
+      'Custom reporting, SLAs, and escalation paths',
+      'Dedicated success lead and quarterly workflow rebuilds',
+      'Volume pricing for large rollouts',
+    ],
   },
 };

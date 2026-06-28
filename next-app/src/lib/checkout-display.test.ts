@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatMonthlyPrice,
   formatSetupFee,
+  friendlyCheckoutError,
   getCheckoutDisplay,
   getPlanConfig,
   normalizePlanId,
@@ -13,13 +14,18 @@ describe("PRICING_PLANS", () => {
     expect(PRICING_PLANS.map((p) => p.name)).toEqual(["Launch", "Growth", "Scale"]);
     expect(PRICING_PLANS.some((p) => p.monthly === 797)).toBe(false);
   });
+
+  it("aligns setup fees with backend MANAGED_PLANS", () => {
+    expect(PRICING_PLANS.find((p) => p.id === "pro")?.setupFee).toBe(5000);
+    expect(PRICING_PLANS.find((p) => p.id === "pro_plus")?.setupFee).toBe(10000);
+  });
 });
 
 describe("getCheckoutDisplay", () => {
   it("returns Growth pricing with setup fee", () => {
     const d = getCheckoutDisplay("pro");
     expect(d.monthly).toBe(4997);
-    expect(d.setupFee).toBe(1997);
+    expect(d.setupFee).toBe(5000);
     expect(d.includeSetupFee).toBe(true);
     expect(d.buttonText).toContain("7-Day Trial");
   });
@@ -32,11 +38,11 @@ describe("getCheckoutDisplay", () => {
     expect(d.modalNote).toContain("White-glove agency onboarding included");
   });
 
-  it("returns Scale pricing with custom suffix support", () => {
+  it("returns Scale pricing with trial CTA", () => {
     const d = getCheckoutDisplay("pro_plus");
     expect(d.monthly).toBe(9997);
-    expect(d.setupFee).toBe(1997);
-    expect(d.buttonText).toContain("Subscribe Now");
+    expect(d.setupFee).toBe(10000);
+    expect(d.buttonText).toContain("7-Day Trial");
   });
 
   it("normalizes unknown plan to pro", () => {
@@ -57,6 +63,18 @@ describe("formatMonthlyPrice", () => {
 
 describe("formatSetupFee", () => {
   it("formats setup fee copy", () => {
-    expect(formatSetupFee(1997)).toBe("$1,997 one-time setup");
+    expect(formatSetupFee(5000)).toBe("$5,000 one-time setup");
+  });
+});
+
+describe("friendlyCheckoutError", () => {
+  it("maps billing-not-configured errors", () => {
+    expect(friendlyCheckoutError("Stripe secret key not configured")).toContain(
+      "hello@owlbell.xyz"
+    );
+  });
+
+  it("passes through unknown errors with support contact", () => {
+    expect(friendlyCheckoutError("random failure")).toContain("hello@owlbell.xyz");
   });
 });

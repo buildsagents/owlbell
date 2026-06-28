@@ -10,9 +10,11 @@ export type PricingPlanConfig = {
 
 export const PRICING_PLANS: PricingPlanConfig[] = [
   { id: "basic", name: "Launch", monthly: 1497, setupFee: null },
-  { id: "pro", name: "Growth", monthly: 4997, setupFee: 1997 },
-  { id: "pro_plus", name: "Scale", monthly: 9997, setupFee: 1997, customPricing: true },
+  { id: "pro", name: "Growth", monthly: 4997, setupFee: 5000 },
+  { id: "pro_plus", name: "Scale", monthly: 9997, setupFee: 10000, customPricing: true },
 ];
+
+const TRIAL_DAYS = 7;
 
 export function normalizePlanId(plan: string): CheckoutPlanId {
   if (plan === "basic" || plan === "pro" || plan === "pro_plus") return plan;
@@ -32,10 +34,7 @@ export function getCheckoutDisplay(plan: string) {
     monthly: config.monthly,
     setupFee: config.setupFee,
     includeSetupFee: config.setupFee !== null,
-    buttonText:
-      config.id === "pro_plus"
-        ? `Subscribe Now — ${config.name}`
-        : `Start 7-Day Trial — ${config.name}`,
+    buttonText: `Start ${TRIAL_DAYS}-Day Trial — ${config.name}`,
     modalTitle: `Subscribe to ${config.name}`,
     modalNote:
       config.setupFee !== null
@@ -50,4 +49,18 @@ export function formatMonthlyPrice(amount: number): string {
 
 export function formatSetupFee(amount: number): string {
   return `$${amount.toLocaleString()} one-time setup`;
+}
+
+export function friendlyCheckoutError(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes("not configured") || lower.includes("503")) {
+    return "Checkout is temporarily unavailable. Email hello@owlbell.xyz and we'll get you started.";
+  }
+  if (lower.includes("unknown plan") || lower.includes("400")) {
+    return "That plan isn't available right now. Try again or contact support.";
+  }
+  if (lower.includes("network") || lower.includes("fetch")) {
+    return "Connection issue — check your internet and try again.";
+  }
+  return "Something went wrong starting checkout. Try again or email hello@owlbell.xyz.";
 }

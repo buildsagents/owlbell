@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FASTAPI_V1 } from "@/lib/consolidation";
 import {
   formatSetupFee,
+  friendlyCheckoutError,
   getCheckoutDisplay,
   type CheckoutPlanId,
 } from "@/lib/checkout-display";
@@ -44,7 +45,7 @@ const PLANS: PlanCard[] = [
     name: "Growth",
     price: 4997,
     priceSuffix: "/mo",
-    setupFee: 1997,
+    setupFee: 5000,
     subtitle: "The flagship managed system for companies serious about recovered revenue.",
     highlighted: true,
     badge: "Most Popular",
@@ -63,10 +64,10 @@ const PLANS: PlanCard[] = [
     name: "Scale",
     price: 9997,
     priceSuffix: "+/mo",
-    setupFee: 1997,
+    setupFee: 10000,
     subtitle: "For multi-location teams and high-volume operators who need white-glove rollout.",
     highlighted: false,
-    cta: "Subscribe Now",
+    cta: "Start 7-Day Trial",
     features: [
       "Everything in Growth",
       "Multiple locations, numbers, and routing trees",
@@ -133,9 +134,11 @@ export default function PricingSection() {
       const json = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          json?.detail || json?.message || "Checkout unavailable. Please try again."
-        );
+        const detail =
+          typeof json?.detail === "string"
+            ? json.detail
+            : json?.message || "Checkout unavailable";
+        throw new Error(friendlyCheckoutError(detail));
       }
 
       const url = json?.data?.url;
@@ -145,7 +148,8 @@ export default function PricingSection() {
 
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const raw = err instanceof Error ? err.message : "Something went wrong";
+      setError(friendlyCheckoutError(raw));
       setLoading(false);
     }
   }

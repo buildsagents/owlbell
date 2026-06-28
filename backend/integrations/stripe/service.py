@@ -1,7 +1,7 @@
 """integrations/stripe/service.py - Stripe Billing service layer for Owlbell.
 
 Subscription checkout, customer billing portal, and webhook handling for the
-managed-service tiers (Basic / Pro / Pro Plus). Enterprise is sold custom and is
+managed-service tiers (Launch / Growth / Scale). Enterprise is sold custom and is
 not self-serve.
 
 Design notes
@@ -18,11 +18,13 @@ Design notes
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 import structlog
+from passlib.context import CryptContext
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,6 +34,7 @@ except ImportError:  # pragma: no cover
     from backend.config import get_settings  # type: ignore
 
 logger = structlog.get_logger(__name__)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class BillingNotConfigured(RuntimeError):
@@ -44,34 +47,34 @@ class BillingNotConfigured(RuntimeError):
 # --------------------------------------------------------------------------- #
 MANAGED_PLANS: dict[str, dict[str, Any]] = {
     "basic": {
-        "name": "Basic",
-        "monthly_usd": 297,
-        "annual_usd": 2970,
-        "setup_usd": 500,
+        "name": "Launch",
+        "monthly_usd": 1497,
+        "annual_usd": 14970,
+        "setup_usd": 2500,
         "price_monthly_attr": "stripe_price_basic_monthly",
         "price_annual_attr": "stripe_price_basic_annual",
         "setup_attr": "stripe_price_setup_basic",
-        "blurb": "24/7 AI answering, voicemail-to-text, instant alerts. 1 number.",
+        "blurb": "Done-for-you AI call answering, lead capture, alerts, and one-number setup.",
     },
     "pro": {
-        "name": "Pro",
-        "monthly_usd": 797,
-        "annual_usd": 7970,
-        "setup_usd": 1000,
+        "name": "Growth",
+        "monthly_usd": 4997,
+        "annual_usd": 49970,
+        "setup_usd": 5000,
         "price_monthly_attr": "stripe_price_pro_monthly",
         "price_annual_attr": "stripe_price_pro_annual",
         "setup_attr": "stripe_price_setup_pro",
-        "blurb": "Full conversations, appointment booking, CRM, routing, analytics.",
+        "blurb": "Core managed phone conversion system with booking, routing, CRM handoff, and tuning.",
     },
     "pro_plus": {
-        "name": "Pro Plus",
-        "monthly_usd": 1497,
-        "annual_usd": 14970,
-        "setup_usd": 1000,
+        "name": "Scale",
+        "monthly_usd": 9997,
+        "annual_usd": 99970,
+        "setup_usd": 10000,
         "price_monthly_attr": "stripe_price_pro_plus_monthly",
         "price_annual_attr": "stripe_price_pro_plus_annual",
-        "setup_attr": "stripe_price_setup_pro",
-        "blurb": "High call volume, extra numbers, priority same-day support.",
+        "setup_attr": "stripe_price_setup_pro_plus",
+        "blurb": "High-volume and multi-location implementation with advanced reporting and SLA options.",
     },
 }
 
@@ -132,6 +135,19 @@ def list_plans() -> list[dict[str, Any]]:
 # Checkout & portal
 # --------------------------------------------------------------------------- #
 
+def _founding_promotion_code_id(stripe: Any) -> Optional[str]:
+    """Resolve active Stripe promotion code for founding plumbers (FOUNDING50)."""
+    settings = get_settings().integrations
+    code = getattr(settings, "stripe_founding_promo_code", None) or "FOUNDING50"
+    try:
+        promos = stripe.PromotionCode.list(code=code, active=True, limit=1)
+        if promos.data:
+            return promos.data[0].id
+    except Exception as exc:  # pragma: no cover - Stripe API errors
+        logger.warning("billing.founding_promo_lookup_failed", code=code, error=str(exc))
+    return None
+
+
 def create_checkout_session(
     *,
     plan: str,
@@ -141,6 +157,7 @@ def create_checkout_session(
     include_setup_fee: bool = True,
     success_url: Optional[str] = None,
     cancel_url: Optional[str] = None,
+    founding: bool = False,
 ) -> dict[str, Any]:
     """Create a Stripe Checkout Session for a subscription.
 
@@ -165,16 +182,43 @@ def create_checkout_session(
         if setup_price:
             line_items.append({"price": setup_price, "quantity": 1})
 
-    session = stripe.checkout.Session.create(
-        mode="subscription",
-        line_items=line_items,
-        customer_email=customer_email,
-        allow_promotion_codes=True,
-        success_url=success_url or settings.stripe_checkout_success_url,
-        cancel_url=cancel_url or settings.stripe_checkout_cancel_url,
-        subscription_data={"metadata": {"plan": plan, "tenant_id": tenant_id or ""}},
-        metadata={"plan": plan, "tenant_id": tenant_id or ""},
-    )
+    subscription_data: dict[str, Any] = {
+        "metadata": {
+            "plan": plan,
+            "tenant_id": tenant_id or "",
+            "founding": "true" if founding else "false",
+        },
+    }
+    # 7-day trial on monthly self-serve checkout (matches marketing site).
+    if period == "monthly" and not founding:
+        subscription_data["trial_period_days"] = 7
+
+    session_kwargs: dict[str, Any] = {
+        "mode": "subscription",
+        "line_items": line_items,
+        "customer_email": customer_email,
+        "allow_promotion_codes": True,
+        "success_url": success_url or settings.stripe_checkout_success_url,
+        "cancel_url": cancel_url or settings.stripe_checkout_cancel_url,
+        "subscription_data": subscription_data,
+        "metadata": {
+            "plan": plan,
+            "tenant_id": tenant_id or "",
+            "founding": "true" if founding else "false",
+        },
+    }
+    if founding:
+        promo_id = _founding_promotion_code_id(stripe)
+        if promo_id:
+            session_kwargs["discounts"] = [{"promotion_code": promo_id}]
+            session_kwargs["allow_promotion_codes"] = False
+        else:
+            raise BillingNotConfigured(
+                "Founding plumber checkout requires the FOUNDING50 promotion in Stripe. "
+                "Configure it in Stripe Dashboard or run scripts/stripe_setup.py."
+            )
+
+    session = stripe.checkout.Session.create(**session_kwargs)
     logger.info("billing.checkout_created", plan=plan, period=period, session_id=session.get("id"))
     return {"id": session.get("id"), "url": session.get("url")}
 
@@ -207,7 +251,11 @@ def construct_event(payload: bytes, sig_header: str) -> Any:
     )
 
 
-async def handle_event(event: Any, db: Optional[AsyncSession] = None) -> dict[str, Any]:
+async def handle_event(
+    event: Any,
+    db: Optional[AsyncSession] = None,
+    event_id: Optional[str] = None,
+) -> dict[str, Any]:
     """Route a verified webhook event to the right tenant-lifecycle action.
 
     Accepts an optional ``db`` session. When provided the handler uses it directly;
@@ -215,9 +263,52 @@ async def handle_event(event: Any, db: Optional[AsyncSession] = None) -> dict[st
 
     Returns a summary dict ``{"event_type": ..., "action": ...}``.
     """
+    from backend.db.tenant_integrations_service import (
+        record_stripe_event,
+        stripe_event_already_processed,
+    )
+
     etype = event.get("type") if isinstance(event, dict) else getattr(event, "type", "")
     data = (event.get("data", {}) or {}).get("object", {}) if isinstance(event, dict) else {}
+    if not event_id:
+        event_id = event.get("id") if isinstance(event, dict) else getattr(event, "id", "")
 
+    own_session = db is None
+    if own_session:
+        from backend.dependencies import get_session_maker
+        maker = get_session_maker()
+        if not maker:
+            logger.error("billing.webhook_no_db", event_type=etype)
+            return {"event_type": etype, "action": "no_db"}
+        db = maker()
+
+    try:
+        if event_id and await stripe_event_already_processed(db, event_id):
+            logger.info("billing.webhook_duplicate", event_id=event_id, event_type=etype)
+            return {"event_type": etype, "action": "duplicate"}
+
+        action = await _dispatch_stripe_event(db, etype, data)
+        await record_stripe_event(db, event_id=event_id or "", event_type=etype, action=action)
+        await db.commit()
+
+        if etype == "checkout.session.completed" and action == "provisioned":
+            await _onboarding_after_checkout(data)
+
+        logger.info("billing.webhook", event_type=etype, action=action)
+        return {"event_type": etype, "action": action}
+    except Exception as exc:
+        await db.rollback()
+        logger.error("billing.webhook_error", event_type=etype, error=str(exc))
+        raise
+    finally:
+        if own_session:
+            await db.close()
+
+
+async def _dispatch_stripe_event(
+    db: AsyncSession, etype: str, data: dict[str, Any],
+) -> str:
+    """Run tenant-lifecycle side effects for a Stripe event type."""
     action = "ignored"
     if etype == "checkout.session.completed":
         meta = data.get("metadata", {}) or {}
@@ -248,8 +339,7 @@ async def handle_event(event: Any, db: Optional[AsyncSession] = None) -> dict[st
         await _suspend(db=db, customer_id=data.get("customer"))
         action = "suspended"
 
-    logger.info("billing.webhook", event_type=etype, action=action)
-    return {"event_type": etype, "action": action}
+    return action
 
 
 async def _send_purchase_alert(
@@ -293,6 +383,45 @@ async def _send_purchase_alert(
         logger.error("billing.purchase_alert.error", error=str(exc))
 
 
+async def _onboarding_after_checkout(data: dict[str, Any]) -> None:
+    """Start onboarding pipeline after checkout transaction is committed."""
+    customer_id = data.get("customer")
+    email = (data.get("customer_details") or {}).get("email", "")
+    meta = data.get("metadata", {}) or {}
+    tenant_id = meta.get("tenant_id") or None
+
+    from backend.dependencies import get_session_maker
+    from backend.domain.onboarding.orchestrator import get_orchestrator
+
+    sm = get_session_maker()
+    if sm is None:
+        return
+
+    if not tenant_id and customer_id:
+        async with sm() as db:
+            tenant = await _find_by_stripe_customer(db, customer_id)
+            if tenant:
+                tenant_id = str(tenant.id)
+                email = email or tenant.business_email or ""
+
+    if not tenant_id:
+        return
+
+    try:
+        orch = get_orchestrator()
+        await orch.on_checkout_completed(
+            tenant_id=tenant_id,
+            email=email,
+            business_name=(email or "Client").split("@")[0].replace(".", " ").title(),
+        )
+    except Exception as exc:
+        logger.warning(
+            "billing.onboarding_pipeline_failed",
+            tenant_id=tenant_id,
+            error=str(exc),
+        )
+
+
 # --------------------------------------------------------------------------- #
 # Tenant-lifecycle hooks
 # --------------------------------------------------------------------------- #
@@ -319,6 +448,7 @@ async def _provision(
     from backend.db.models.enums import PlanTier, TenantStatus
     from backend.db.models.user import User
     from backend.db.models.enums import UserRole
+    from backend.db.tenant_integrations_service import upsert_for_tenant
 
     plan_map = {"basic": PlanTier.BASIC, "pro": PlanTier.PRO, "pro_plus": PlanTier.PRO_PLUS}
     plan_tier = plan_map.get(plan or "", PlanTier.FREE)
@@ -338,13 +468,22 @@ async def _provision(
         db = maker()
 
     try:
+        resolved_tenant_id: Optional[str] = tenant_id
         if tenant_id:
-            # Existing tenant — update plan + stripe metadata
-            await db.execute(
-                update(Tenant)
-                .where(Tenant.id == tenant_id)
-                .values(plan_tier=plan_tier, config_json=stripe_config)
-            )
+            result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+            tenant = result.scalar_one_or_none()
+            if tenant:
+                cfg = dict(tenant.config_json or {})
+                cfg.update(stripe_config)
+                tenant.config_json = cfg
+                tenant.plan_tier = plan_tier
+                await upsert_for_tenant(
+                    db,
+                    tenant.id,
+                    stripe_customer_id=customer_id,
+                    stripe_subscription_id=subscription_id,
+                    stripe_email=email,
+                )
             logger.info("billing.provision_existing", tenant_id=tenant_id, plan=plan)
         else:
             # Self-serve signup — create tenant + admin user
@@ -353,7 +492,7 @@ async def _provision(
                 slug=slug,
                 name=slug.replace("-", " ").title(),
                 plan_tier=plan_tier,
-                status=TenantStatus.TRIAL,
+                status=TenantStatus.PENDING,
                 business_email=email or "",
                 config_json={
                     **stripe_config,
@@ -369,7 +508,7 @@ async def _provision(
 
             user = User(
                 email=email or f"{slug}@temp.owlbell.xyz",
-                password_hash="",
+                password_hash=pwd_context.hash(secrets.token_urlsafe(32)),
                 first_name="",
                 last_name="",
                 role=UserRole.ADMIN,
@@ -379,13 +518,24 @@ async def _provision(
             db.add(user)
             await db.flush()
 
-            tenant_id = str(tenant.id)
-            logger.info("billing.provision_new", tenant_id=tenant_id, plan=plan)
+            resolved_tenant_id = str(tenant.id)
+            await upsert_for_tenant(
+                db,
+                tenant.id,
+                stripe_customer_id=customer_id,
+                stripe_subscription_id=subscription_id,
+                stripe_email=email,
+            )
+            logger.info("billing.provision_new", tenant_id=resolved_tenant_id, plan=plan)
 
-        await db.commit()
+        if own_session:
+            await db.commit()
     except Exception as exc:
-        await db.rollback()
+        if own_session:
+            await db.rollback()
         logger.error("billing.provision_error", error=str(exc), tenant_id=tenant_id)
+        if not own_session:
+            raise
     finally:
         if own_session:
             await db.close()
@@ -409,7 +559,8 @@ async def _mark_active(*, db: Optional[AsyncSession] = None, customer_id: Option
         tenant = await _find_by_stripe_customer(db, customer_id)
         if tenant:
             tenant.status = TenantStatus.ACTIVE
-            await db.commit()
+            if own_session:
+                await db.commit()
             logger.info("billing.mark_active_ok", tenant_id=str(tenant.id))
     except Exception as exc:
         await db.rollback()
@@ -437,7 +588,8 @@ async def _flag_dunning(*, db: Optional[AsyncSession] = None, customer_id: Optio
         tenant = await _find_by_stripe_customer(db, customer_id)
         if tenant:
             tenant.status = TenantStatus.SUSPENDED
-            await db.commit()
+            if own_session:
+                await db.commit()
             logger.warning("billing.dunning_flagged", tenant_id=str(tenant.id))
     except Exception as exc:
         await db.rollback()
@@ -465,7 +617,8 @@ async def _suspend(*, db: Optional[AsyncSession] = None, customer_id: Optional[s
         tenant = await _find_by_stripe_customer(db, customer_id)
         if tenant:
             tenant.status = TenantStatus.SUSPENDED
-            await db.commit()
+            if own_session:
+                await db.commit()
             logger.warning("billing.suspended", tenant_id=str(tenant.id))
     except Exception as exc:
         await db.rollback()
@@ -476,8 +629,14 @@ async def _suspend(*, db: Optional[AsyncSession] = None, customer_id: Optional[s
 
 
 async def _find_by_stripe_customer(db: AsyncSession, customer_id: str) -> Optional[Any]:
-    """Find a tenant by ``stripe_customer_id`` in ``config_json``."""
+    """Find a tenant by stripe_customer_id (tenant_integrations, then config_json)."""
     from backend.db.models.tenant import Tenant
+    from backend.db.tenant_integrations_service import get_by_stripe_customer_id
+
+    row = await get_by_stripe_customer_id(db, customer_id)
+    if row:
+        return await db.get(Tenant, row.tenant_id)
+
     result = await db.execute(select(Tenant))
     for tenant in result.scalars().all():
         cfg = tenant.config_json or {}

@@ -88,7 +88,7 @@ export default function HeroSection() {
                   <path d="M6.3 4.2a1 1 0 0 1 1.52-.85l7.5 4.5a1 1 0 0 1 0 1.7l-7.5 4.5a1 1 0 0 1-1.52-.85V4.2Z" />
                 </svg>
               </span>
-              Watch How It Works
+              See How It Works
             </button>
           </div>
 

@@ -35,7 +35,7 @@ const TONES = ["Warm & friendly", "Professional & efficient", "Calm & reassuring
 const STEPS = [
   { key: "business", title: "Your plumbing company", hint: "The basics so your AI introduces your shop correctly." },
   { key: "calls", title: "Calls & hours", hint: "How calls reach you and when you're open." },
-  { key: "ai", title: "Your AI receptionist", hint: "How it should sound and what to highlight." },
+  { key: "ai", title: "Your agency receptionist", hint: "How it should sound and what to highlight." },
   { key: "knowledge", title: "Knowledge & FAQs", hint: "What callers ask — so it answers like you would." },
   { key: "integrations", title: "Calendar & alerts", hint: "Where bookings land and how you're notified." },
   { key: "review", title: "Review & submit", hint: "Confirm and we'll start building." },
@@ -105,14 +105,14 @@ export default function OnboardingPortal() {
           <div className="ob-done-badge">🦉</div>
           <h1>You&apos;re all set, {data.businessName}.</h1>
           <p>
-            Your dedicated specialist is configuring your AI receptionist now —
+            Your dedicated agency specialist is configuring your receptionist now —
             building your knowledge base, connecting your number, and running test
             calls. <strong>You&apos;ll be live within ~1 business day</strong>, and
             we&apos;ll email <strong>{data.email}</strong> the moment it&apos;s ready.
           </p>
           <ul className="ob-next">
             <li>✅ Details received</li>
-            <li>⏳ AI receptionist being configured</li>
+            <li>⏳ Agency receptionist being configured</li>
             <li>⏳ Phone number connected & test calls</li>
             <li>⏳ Go live — we&apos;ll notify you</li>
           </ul>
@@ -219,18 +219,18 @@ export default function OnboardingPortal() {
         )}
 
         <div className="ob-actions">
-          {step > 0 && <button className="btn btn-ghost" onClick={() => setStep((n) => n - 1)} disabled={submitting}>← Back</button>}
+          {step > 0 && <button className="agency-btn agency-btn--secondary" onClick={() => setStep((n) => n - 1)} disabled={submitting}>← Back</button>}
           {s !== "review" ? (
-            <button className="btn btn-primary" onClick={() => setStep((n) => n + 1)} disabled={!canAdvance}>Continue →</button>
+            <button className="agency-btn agency-btn--primary" onClick={() => setStep((n) => n + 1)} disabled={!canAdvance}>Continue →</button>
           ) : (
-            <button className="btn btn-primary" onClick={submit} disabled={submitting}>
+            <button className="agency-btn agency-btn--primary" onClick={submit} disabled={submitting}>
               {submitting ? "Submitting…" : "Submit & start building →"}
             </button>
           )}
         </div>
       </div>
 
-      <p className="ob-foot">🔒 Your details are used only to configure your AI receptionist.</p>
+      <p className="ob-foot">🔒 Your details are used only to configure your Owlbell agency receptionist.</p>
     </main>
   );
 }

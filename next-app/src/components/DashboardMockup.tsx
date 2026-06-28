@@ -112,7 +112,11 @@ export default function DashboardMockup() {
           </p>
         </header>
 
-        <div className="dash-mock" aria-label="Owlbell dashboard preview">
+        <div
+          className="dash-mock dash-mock--static"
+          aria-label="Illustrative Owlbell dashboard preview — not interactive"
+        >
+          <span className="dash-mock-badge">Illustrative preview</span>
           <div className="dash-mock-chrome">
             {/* Top nav */}
             <header className="dash-nav">

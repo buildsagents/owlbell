@@ -44,11 +44,16 @@ export default function ProofResultsSection() {
       <div className="wrap">
         <header className="section-header">
           <span className="section-eyebrow section-eyebrow--pill">Proven results</span>
-          <h2>Real Revenue Recovery — Not Vanity Metrics</h2>
+          <h2>Revenue Recovery — Not Vanity Metrics</h2>
           <p>
             Owlbell clients track recovered revenue, booked jobs, and missed-call
-            prevention in one dashboard. These are the numbers our agency
+            prevention in one dashboard. These are the outcomes our agency
             optimizes every week.
+          </p>
+          <p className="proof-disclaimer">
+            Illustrative examples based on typical plumbing agency results — not
+            verified client testimonials. Your results depend on call volume,
+            service area, and job mix.
           </p>
         </header>
 
@@ -60,6 +65,7 @@ export default function ProofResultsSection() {
               <span className="proof-stat-delta">
                 <span aria-hidden>↑</span> {stat.delta} vs prior period
               </span>
+              <span className="proof-stat-note">Illustrative</span>
             </article>
           ))}
         </div>

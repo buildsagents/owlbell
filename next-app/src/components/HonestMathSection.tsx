@@ -98,6 +98,10 @@ export default function HonestMathSection() {
             <p className="honest-guarantee-text">
               5 jobs booked in your first 30 days — or we keep working until you get there
             </p>
+            <p className="honest-guarantee-terms">
+              Applies to Growth and Scale plans with active call forwarding.{" "}
+              <a href="/terms#guarantee">See guarantee terms</a>.
+            </p>
           </div>
 
           <div className="honest-table-wrap">
