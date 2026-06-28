@@ -9,86 +9,41 @@ import {
   type CheckoutPlanId,
 } from "@/lib/checkout-display";
 
-type PlanCard = {
-  id: CheckoutPlanId;
-  name: string;
-  price: number;
-  priceSuffix: string;
-  setupFee: number | null;
-  subtitle: string;
-  highlighted: boolean;
-  badge?: string;
-  cta: string;
-  features: string[];
-};
+const ONBOARDING = [
+  { day: "Day 0", text: "Subscribe + intake form" },
+  { day: "Day 1", text: "Scripts, calendar, routing built by your specialist" },
+  { day: "Day 2", text: "Test calls + go live on your line" },
+];
 
-const PLANS: PlanCard[] = [
+const PRIMARY_PLANS = [
   {
-    id: "basic",
+    id: "basic" as const,
     name: "Launch",
     price: 1497,
-    priceSuffix: "/mo",
-    setupFee: null,
-    subtitle: "Your managed reception agency — every call answered, zero hiring.",
-    highlighted: false,
-    cta: "Start 7-Day Trial",
+    setupFee: null as number | null,
+    blurb: "Every call answered. Owner alerts. Agency handles the wiring.",
     features: [
-      "Agency-configured receptionist trained on your business and service area",
-      "24/7 call answering, lead capture, and instant owner alerts",
-      "One number or call-forwarding setup — we handle the wiring",
-      "Emergency routing rules for after-hours and urgent jobs",
-      "Script tuning during your first 30 days",
+      "24/7 answering + lead capture",
+      "Emergency routing rules",
+      "One number or call forwarding",
+      "30-day script tuning",
     ],
   },
   {
-    id: "pro",
+    id: "pro" as const,
     name: "Growth",
     price: 4997,
-    priceSuffix: "/mo",
     setupFee: 5000,
-    subtitle: "The flagship managed system for companies serious about recovered revenue.",
-    highlighted: true,
-    badge: "Most Popular",
-    cta: "Start 7-Day Trial",
+    blurb: "Booking workflow, CRM handoff, and a dedicated success contact.",
+    featured: true,
     features: [
       "Everything in Launch",
-      "Calendar booking and missed-call recovery workflow",
-      "CRM or job-management handoff",
-      "Advanced routing for after-hours and emergency calls",
-      "Monthly revenue review and conversion tuning",
-      "Priority support with a dedicated success contact",
-    ],
-  },
-  {
-    id: "pro_plus",
-    name: "Scale",
-    price: 9997,
-    priceSuffix: "+/mo",
-    setupFee: 10000,
-    subtitle: "For multi-location teams and high-volume operators who need white-glove rollout.",
-    highlighted: false,
-    cta: "Start 7-Day Trial",
-    features: [
-      "Everything in Growth",
-      "Multiple locations, numbers, and routing trees",
-      "Custom reporting, SLAs, and escalation paths",
-      "Dedicated success lead and quarterly workflow rebuilds",
-      "Volume pricing available for enterprise rollouts",
+      "Calendar booking + missed-call recovery",
+      "CRM / job-management handoff",
+      "Monthly revenue review",
     ],
   },
 ];
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-      <path
-        fillRule="evenodd"
-        d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.25 7.333a1 1 0 0 1-1.435-.02L3.29 10.71a1 1 0 0 1 1.42-1.408l3.185 3.235 6.54-6.617a1 1 0 0 1 1.414-.006Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
 
 export default function PricingSection() {
   const [modalPlan, setModalPlan] = useState<CheckoutPlanId | null>(null);
@@ -116,7 +71,6 @@ export default function PricingSection() {
 
     setLoading(true);
     setError(null);
-
     const display = getCheckoutDisplay(modalPlan);
 
     try {
@@ -142,10 +96,7 @@ export default function PricingSection() {
       }
 
       const url = json?.data?.url;
-      if (!url) {
-        throw new Error("No checkout URL returned. Please contact support.");
-      }
-
+      if (!url) throw new Error("No checkout URL returned. Please contact support.");
       window.location.href = url;
     } catch (err) {
       const raw = err instanceof Error ? err.message : "Something went wrong";
@@ -156,74 +107,79 @@ export default function PricingSection() {
 
   return (
     <>
-      <section className="section section--last" id="pricing">
+      <section className="section pricing-editorial" id="pricing">
         <div className="wrap">
-          <header className="section-header">
-            <span className="section-eyebrow section-eyebrow--pill">Pricing</span>
-            <h2>Agency Pricing — Built for Companies That Can&apos;t Afford Missed Calls</h2>
-            <p>
-              Owlbell is a premium AI receptionist agency — not software you
-              configure yourself. Every plan includes human-led setup, script
-              tuning, and ongoing optimization from a dedicated success team.
-            </p>
+          <header className="section-lead">
+            <p className="kicker kicker--dark">Plans</p>
+            <h2>Agency pricing for shops that can&apos;t miss calls</h2>
+            <p>7-day trial on every plan. White-glove onboarding included. Cancel during trial.</p>
           </header>
 
-          <div className="pricing-grid">
-            {PLANS.map((plan) => (
+          <div className="pricing-editorial-grid">
+            {PRIMARY_PLANS.map((plan) => (
               <article
                 key={plan.id}
-                className={`pricing-card agency-card${plan.highlighted ? " pricing-card--featured" : ""}`}
+                className={`pricing-ticket${"featured" in plan && plan.featured ? " pricing-ticket--featured" : ""}`}
               >
-                {plan.highlighted && plan.badge && (
-                  <span className="pricing-popular">{plan.badge}</span>
+                {"featured" in plan && plan.featured && (
+                  <span className="pricing-ticket-tag">Recommended</span>
                 )}
-                <h3 className="pricing-plan-name">{plan.name}</h3>
-                <div className="pricing-price">
-                  <span className="pricing-amount">
-                    ${plan.price.toLocaleString()}
-                  </span>
-                  <span className="pricing-period">{plan.priceSuffix}</span>
+                <h3>{plan.name}</h3>
+                <p className="pricing-ticket-blurb">{plan.blurb}</p>
+                <div className="pricing-ticket-price">
+                  <span className="num">${plan.price.toLocaleString()}</span>
+                  <span>/mo</span>
                 </div>
                 {plan.setupFee !== null && (
-                  <p className="pricing-setup-fee">
-                    + {formatSetupFee(plan.setupFee)}
-                  </p>
+                  <p className="pricing-ticket-setup">+ {formatSetupFee(plan.setupFee)}</p>
                 )}
-                <p className="pricing-subtitle">{plan.subtitle}</p>
-                <ul className="pricing-features">
-                  {plan.features.map((feature) => (
-                    <li key={feature}>
-                      <span className="pricing-check">
-                        <CheckIcon />
-                      </span>
-                      {feature}
-                    </li>
+                <ul>
+                  {plan.features.map((f) => (
+                    <li key={f}>{f}</li>
                   ))}
                 </ul>
                 <button
                   type="button"
-                  className={`agency-btn ${plan.highlighted ? "agency-btn--primary" : "agency-btn--secondary"} agency-btn--block`}
+                  className={`btn ${"featured" in plan && plan.featured ? "btn--copper" : "btn--outline"} btn--block`}
                   onClick={() => openCheckout(plan.id)}
                 >
-                  {plan.cta}
+                  Start 7-day trial
                 </button>
               </article>
             ))}
           </div>
 
-          <p className="pricing-footnote">
-            All plans include a 7-day trial with white-glove onboarding. Subscribe
-            online instantly — no sales call required. Cancel anytime during trial.
-          </p>
+          <article className="pricing-scale">
+            <div>
+              <h3>Scale</h3>
+              <p>Multi-location, custom SLAs, dedicated success lead.</p>
+            </div>
+            <div className="pricing-scale-price">
+              <span className="num">$9,997+</span>
+              <span>/mo + {formatSetupFee(10000)}</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn--outline"
+              onClick={() => openCheckout("pro_plus")}
+            >
+              Start 7-day trial
+            </button>
+          </article>
+
+          <ol className="pricing-onboard">
+            {ONBOARDING.map((step) => (
+              <li key={step.day}>
+                <span className="num">{step.day}</span>
+                <span>{step.text}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
       {modalPlan && checkout && (
-        <div
-          className="pricing-modal-overlay"
-          role="presentation"
-          onClick={closeModal}
-        >
+        <div className="pricing-modal-overlay" role="presentation" onClick={closeModal}>
           <div
             className="pricing-modal"
             role="dialog"
@@ -231,12 +187,7 @@ export default function PricingSection() {
             aria-labelledby="pricing-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              className="pricing-modal-close"
-              onClick={closeModal}
-              aria-label="Close"
-            >
+            <button type="button" className="pricing-modal-close" onClick={closeModal} aria-label="Close">
               ✕
             </button>
             <h3 id="pricing-modal-title">{checkout.modalTitle}</h3>
@@ -258,7 +209,7 @@ export default function PricingSection() {
               {error && <p className="pricing-modal-error">{error}</p>}
               <button
                 type="submit"
-                className="agency-btn agency-btn--primary agency-btn--block"
+                className="btn btn--copper btn--block"
                 disabled={loading || !email.trim()}
               >
                 {loading ? "Redirecting to Stripe…" : checkout.buttonText}

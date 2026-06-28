@@ -1,27 +1,29 @@
 import Link from "next/link";
 
-export default function OwlLogo() {
+type OwlLogoProps = {
+  variant?: "light" | "dark";
+};
+
+export default function OwlLogo({ variant = "dark" }: OwlLogoProps) {
   return (
-    <Link href="/" className="owl-logo" aria-label="Owlbell home">
+    <Link href="/" className={`owl-logo owl-logo--${variant}`} aria-label="Owlbell home">
       <svg
-        className="owl-logo-icon"
+        className="owl-logo-mark"
         viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden
       >
-        <circle cx="16" cy="16" r="15" fill="#f59e0b" />
-        <ellipse cx="11" cy="14" rx="4.5" ry="5" fill="#fff" />
-        <ellipse cx="21" cy="14" rx="4.5" ry="5" fill="#fff" />
-        <circle cx="11" cy="14" r="2.2" fill="#0f172a" />
-        <circle cx="21" cy="14" r="2.2" fill="#0f172a" />
+        <rect width="32" height="32" rx="8" fill="currentColor" fillOpacity="0.12" />
+        <circle cx="12" cy="15" r="3" fill="currentColor" />
+        <circle cx="20" cy="15" r="3" fill="currentColor" />
         <path
-          d="M16 19.5c-2.2 0-4 1.2-4.8 3 1.6 1.2 3.2 1.8 4.8 1.8s3.2-.6 4.8-1.8c-.8-1.8-2.6-3-4.8-3z"
-          fill="#fff"
+          d="M16 20c-2 0-3.5 1-4 2.5 1.2.8 2.5 1.2 4 1.2s2.8-.4 4-1.2c-.5-1.5-2-2.5-4-2.5z"
+          fill="currentColor"
+          fillOpacity="0.85"
         />
-        <path d="M10 8.5c1.5-2 3.5-3 6-3s4.5 1 6 3" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
-      <span className="owl-logo-text">
+      <span className="owl-logo-word">
         Owl<span>bell</span>
       </span>
     </Link>

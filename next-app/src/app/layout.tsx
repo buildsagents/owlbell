@@ -1,21 +1,27 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const fraunces = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  axes: ["opsz"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta-sans",
+const jetbrains = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
 const SITE_URL = "https://owlbell.xyz";
-const SITE_TITLE = "Owlbell — Stop Losing $400+ Jobs to Voicemail";
+const SITE_TITLE = "Owlbell — Every emergency call answered";
 const SITE_DESCRIPTION =
-  "The premium AI receptionist agency for plumbing companies. White-glove setup, dedicated human support, every call answered — subscribe online instantly.";
+  "Managed reception agency for US plumbing contractors. We answer, book, and text you the job — 24/7.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -45,9 +51,9 @@ const jsonLd = {
   name: "Owlbell",
   url: SITE_URL,
   email: "hello@owlbell.xyz",
+  telephone: "+1-888-555-0199",
   description: SITE_DESCRIPTION,
   areaServed: "US",
-  knowsAbout: ["AI receptionist", "plumbing call answering", "appointment booking"],
 };
 
 export default function RootLayout({
@@ -58,7 +64,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${plusJakarta.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${dmSans.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <head>
         <script

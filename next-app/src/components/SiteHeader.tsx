@@ -4,19 +4,18 @@ import { useEffect, useState } from "react";
 import OwlLogo from "@/components/OwlLogo";
 
 const NAV = [
-  { id: "results", label: "Results" },
-  { id: "how", label: "How it works" },
-  { id: "dashboard", label: "Dashboard" },
+  { id: "results", label: "Workflow" },
+  { id: "how", label: "Agency" },
   { id: "honest-math", label: "ROI" },
-  { id: "pricing", label: "Pricing" },
+  { id: "pricing", label: "Plans" },
 ];
 
 export default function SiteHeader() {
-  const [scrolled, setScrolled] = useState(false);
+  const [solid, setSolid] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => setSolid(window.scrollY > 48);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -35,9 +34,9 @@ export default function SiteHeader() {
   };
 
   return (
-    <header className={`site-header${scrolled ? " site-header--scrolled" : ""}`}>
+    <header className={`site-header${solid ? " site-header--solid" : " site-header--hero"}`}>
       <nav className="site-nav wrap" aria-label="Main">
-        <OwlLogo />
+        <OwlLogo variant={solid ? "dark" : "light"} />
 
         <div className="site-nav-links">
           {NAV.map((item) => (
@@ -53,14 +52,16 @@ export default function SiteHeader() {
         </div>
 
         <div className="site-nav-actions">
+          <a href="tel:+18885550199" className="site-nav-phone num">
+            (888) 555-0199
+          </a>
           <button
             type="button"
-            className="agency-btn agency-btn--primary agency-btn--sm site-nav-cta"
+            className="btn btn--copper btn--sm site-nav-cta"
             onClick={() => scrollTo("pricing")}
           >
-            Get Started
+            Start trial
           </button>
-
           <button
             type="button"
             className="site-nav-toggle"
@@ -92,12 +93,11 @@ export default function SiteHeader() {
               {item.label}
             </button>
           ))}
-          <button
-            type="button"
-            className="agency-btn agency-btn--primary agency-btn--block"
-            onClick={() => scrollTo("pricing")}
-          >
-            Get Started
+          <a href="tel:+18885550199" className="site-mobile-phone num">
+            (888) 555-0199
+          </a>
+          <button type="button" className="btn btn--copper btn--block" onClick={() => scrollTo("pricing")}>
+            Start trial
           </button>
         </div>
       </div>

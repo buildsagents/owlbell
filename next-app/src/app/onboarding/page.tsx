@@ -219,12 +219,12 @@ export default function OnboardingPortal() {
         )}
 
         <div className="ob-actions">
-          {step > 0 && <button className="agency-btn agency-btn--secondary" onClick={() => setStep((n) => n - 1)} disabled={submitting}>← Back</button>}
+          {step > 0 && <button className="btn btn--outline" onClick={() => setStep((n) => n - 1)} disabled={submitting}>← Back</button>}
           {s !== "review" ? (
-            <button className="agency-btn agency-btn--primary" onClick={() => setStep((n) => n + 1)} disabled={!canAdvance}>Continue →</button>
+            <button className="btn btn--copper" onClick={() => setStep((n) => n + 1)} disabled={!canAdvance}>Continue</button>
           ) : (
-            <button className="agency-btn agency-btn--primary" onClick={submit} disabled={submitting}>
-              {submitting ? "Submitting…" : "Submit & start building →"}
+            <button className="btn btn--copper" onClick={submit} disabled={submitting}>
+              {submitting ? "Submitting…" : "Submit & start building"}
             </button>
           )}
         </div>

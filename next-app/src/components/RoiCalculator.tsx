@@ -19,42 +19,61 @@ export default function RoiCalculator() {
     [missedPerWeek, avgJobValue]
   );
 
+  const breakevenDays = useMemo(() => {
+    if (recoveredMonthly <= 0) return null;
+    const daily = recoveredMonthly / 30;
+    return Math.max(1, Math.ceil(1497 / daily));
+  }, [recoveredMonthly]);
+
   return (
-    <div className="roi-card agency-card">
-      <h2 className="roi-card-title">What Voicemail Is Costing You</h2>
-
-      <div className="roi-field">
-        <label htmlFor="missed-calls">Calls missed per week</label>
-        <input
-          id="missed-calls"
-          type="number"
-          min={0}
-          max={200}
-          value={missedPerWeek}
-          onChange={(e) => setMissedPerWeek(Math.max(0, Number(e.target.value) || 0))}
-        />
-      </div>
-
-      <div className="roi-field">
-        <label htmlFor="avg-job">Average job value</label>
-        <div className="roi-input-prefix">
-          <span className="roi-prefix">$</span>
-          <input
-            id="avg-job"
-            type="number"
-            min={0}
-            max={10000}
-            step={50}
-            value={avgJobValue}
-            onChange={(e) => setAvgJobValue(Math.max(0, Number(e.target.value) || 0))}
-          />
+    <div className="roi-strip">
+      <div className="wrap roi-strip-inner">
+        <div className="roi-strip-copy">
+          <h2>What voicemail is costing you</h2>
+          <p>Drag the sliders — most plumbing shops underestimate missed calls.</p>
         </div>
-      </div>
 
-      <div className="roi-result">
-        <span className="roi-result-label">Potential recovered</span>
-        <span className="roi-result-value">{formatCurrency(recoveredMonthly)}/mo</span>
-        <span className="roi-result-hint">monthly revenue at risk</span>
+        <div className="roi-strip-controls">
+          <label className="roi-slider">
+            <span className="roi-slider-top">
+              <span>Calls missed per week</span>
+              <strong className="num">{missedPerWeek}</strong>
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={40}
+              value={missedPerWeek}
+              onChange={(e) => setMissedPerWeek(Number(e.target.value))}
+            />
+          </label>
+
+          <label className="roi-slider">
+            <span className="roi-slider-top">
+              <span>Average job value</span>
+              <strong className="num">${avgJobValue.toLocaleString()}</strong>
+            </span>
+            <input
+              type="range"
+              min={150}
+              max={1500}
+              step={25}
+              value={avgJobValue}
+              onChange={(e) => setAvgJobValue(Number(e.target.value))}
+            />
+          </label>
+        </div>
+
+        <div className="roi-strip-result">
+          <span className="roi-strip-label">Revenue at risk</span>
+          <span className="roi-strip-value num">{formatCurrency(recoveredMonthly)}</span>
+          <span className="roi-strip-hint">per month</span>
+          {breakevenDays !== null && recoveredMonthly > 1497 && (
+            <span className="roi-strip-breakeven">
+              Launch plan pays for itself in ~{breakevenDays} days at this rate
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
