@@ -1,4 +1,5 @@
 const FOOTER_LINKS = [
+  { id: "results", label: "Results" },
   { id: "how", label: "How it works" },
   { id: "dashboard", label: "Dashboard" },
   { id: "honest-math", label: "ROI" },

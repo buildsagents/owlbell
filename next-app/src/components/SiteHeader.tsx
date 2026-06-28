@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import OwlLogo from "@/components/OwlLogo";
 
 const NAV = [
+  { id: "results", label: "Results" },
   { id: "how", label: "How it works" },
   { id: "dashboard", label: "Dashboard" },
   { id: "honest-math", label: "ROI" },

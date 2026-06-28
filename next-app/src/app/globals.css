@@ -328,6 +328,9 @@ summary:focus-visible {
 
 .section-hero {
   padding-top: var(--space-7);
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 0%, rgba(245, 158, 11, 0.07) 0%, transparent 70%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-alt) 100%);
 }
 
 .section-header {
@@ -386,6 +389,15 @@ summary:focus-visible {
   border: 1px solid var(--card-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-soft);
+  transition:
+    box-shadow 0.2s var(--ease-out),
+    border-color 0.2s var(--ease-out),
+    transform 0.2s var(--ease-out);
+}
+
+.agency-card:hover {
+  border-color: rgba(245, 158, 11, 0.18);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.1);
 }
 
 .agency-card--flush {
@@ -593,6 +605,127 @@ summary:focus-visible {
   justify-self: end;
   width: 100%;
   max-width: 420px;
+}
+
+/* ---------- Proof / Results ---------- */
+.proof-section {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.proof-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.proof-stat {
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.proof-stat-value {
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.proof-stat-label {
+  font-size: var(--text-sm);
+  color: var(--ink2);
+  line-height: 1.4;
+}
+
+.proof-stat-delta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--good);
+  margin-top: 4px;
+}
+
+.proof-outcomes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
+}
+
+.proof-outcome {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.proof-outcome-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.proof-outcome-head h3 {
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.proof-outcome-location {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.proof-outcome-metric {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand-dark);
+  background: var(--brand-bg);
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.proof-outcome blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+.proof-outcome blockquote p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.65;
+  color: var(--ink2);
+  font-style: normal;
+}
+
+.proof-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+  padding-top: var(--space-2);
+}
+
+.proof-cta p {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
 }
 
 /* ---------- ROI Calculator ---------- */
@@ -1181,6 +1314,17 @@ summary:focus-visible {
     justify-self: stretch;
     max-width: none;
   }
+
+  .proof-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .proof-outcomes {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1205,6 +1349,14 @@ summary:focus-visible {
 
   .hero-trust-pill {
     justify-content: center;
+  }
+
+  .proof-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .proof-outcome-head {
+    flex-direction: column;
   }
 }
 
