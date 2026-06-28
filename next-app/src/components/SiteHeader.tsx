@@ -1,25 +1,39 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import OwlLogo from "@/components/OwlLogo";
 
-const NAV = [
+const SCROLL_NAV = [
   { id: "results", label: "Workflow" },
   { id: "how", label: "Agency" },
   { id: "honest-math", label: "ROI" },
   { id: "pricing", label: "Plans" },
 ];
 
+const PAGE_NAV = [
+  { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
+];
+
 export default function SiteHeader() {
-  const [solid, setSolid] = useState(false);
+  const pathname = usePathname();
+  const onHome = pathname === "/";
+  const [solid, setSolid] = useState(!onHome);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (!onHome) {
+      setSolid(true);
+      return;
+    }
+
     const onScroll = () => setSolid(window.scrollY > 48);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [onHome]);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -30,8 +44,14 @@ export default function SiteHeader() {
 
   const scrollTo = (id: string) => {
     setMenuOpen(false);
+    if (!onHome) {
+      window.location.href = `/#${id}`;
+      return;
+    }
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header className={`site-header${solid ? " site-header--solid" : " site-header--hero"}`}>
@@ -39,7 +59,7 @@ export default function SiteHeader() {
         <OwlLogo variant={solid ? "dark" : "light"} />
 
         <div className="site-nav-links">
-          {NAV.map((item) => (
+          {SCROLL_NAV.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -48,6 +68,15 @@ export default function SiteHeader() {
             >
               {item.label}
             </button>
+          ))}
+          {PAGE_NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`site-nav-link site-nav-link--page${pathname === item.href ? " site-nav-link--active" : ""}`}
+            >
+              {item.label}
+            </Link>
           ))}
         </div>
 
@@ -83,7 +112,7 @@ export default function SiteHeader() {
         hidden={!menuOpen}
       >
         <div className="site-mobile-menu-inner">
-          {NAV.map((item) => (
+          {SCROLL_NAV.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -92,6 +121,16 @@ export default function SiteHeader() {
             >
               {item.label}
             </button>
+          ))}
+          {PAGE_NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="site-mobile-link site-mobile-link--page"
+              onClick={closeMenu}
+            >
+              {item.label}
+            </Link>
           ))}
           <a href="mailto:hello@owlbell.xyz" className="site-mobile-email">
             hello@owlbell.xyz

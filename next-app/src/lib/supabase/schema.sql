@@ -127,3 +127,27 @@ CREATE INDEX IF NOT EXISTS idx_calls_org_id     ON calls(org_id);
 CREATE INDEX IF NOT EXISTS idx_calls_created_at ON calls(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_agents_org_id    ON agents(org_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_org_id  ON profiles(org_id);
+
+-- ============================================================
+-- 7. Onboarding intake (post-checkout concierge portal)
+--    Public can submit (customers aren't logged in at onboarding
+--    time); reads are restricted to the service role / ops.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS onboarding_intake (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email             TEXT NOT NULL,
+  business_name     TEXT NOT NULL,
+  stripe_session_id TEXT,
+  payload           JSONB NOT NULL DEFAULT '{}'::jsonb,
+  status            TEXT NOT NULL DEFAULT 'submitted',
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE onboarding_intake ENABLE ROW LEVEL SECURITY;
+
+-- Anyone may submit their intake (they're not logged in yet at this point).
+CREATE POLICY "Anyone can submit onboarding intake"
+  ON onboarding_intake FOR INSERT
+  WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_onboarding_intake_created_at ON onboarding_intake(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_onboarding_intake_email      ON onboarding_intake(email);

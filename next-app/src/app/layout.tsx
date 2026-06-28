@@ -27,6 +27,16 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
+  keywords: [
+    "plumbing reception",
+    "managed reception",
+    "plumbing call answering",
+    "after hours plumbing calls",
+    "plumbing contractor answering service",
+    "emergency plumbing calls",
+    "24/7 plumbing reception",
+    "Owlbell",
+  ],
   openGraph: {
     type: "website",
     url: SITE_URL,
@@ -34,11 +44,20 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     locale: "en_US",
+    images: [
+      {
+        url: "/og.svg",
+        width: 1200,
+        height: 630,
+        alt: "Owlbell — Every emergency call answered",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: ["/og.svg"],
   },
   alternates: {
     canonical: SITE_URL,

@@ -14,8 +14,11 @@ export default function SiteFooter() {
         </div>
 
         <nav className="site-footer-nav" aria-label="Footer">
-          <a href="#how">Agency</a>
-          <a href="#pricing">Plans</a>
+          <a href="/about">About</a>
+          <a href="/faq">FAQ</a>
+          <a href="/demo">Sample call</a>
+          <a href="/#how">Agency</a>
+          <a href="/#pricing">Plans</a>
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
         </nav>
@@ -23,6 +26,7 @@ export default function SiteFooter() {
 
       <div className="wrap site-footer-bottom">
         <p>© {new Date().getFullYear()} Owlbell · Plumbing only</p>
+        <p className="site-footer-entity">Owlbell · Managed reception services</p>
       </div>
     </footer>
   );

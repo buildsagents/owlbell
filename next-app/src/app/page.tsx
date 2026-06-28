@@ -5,6 +5,7 @@ import HowItWorksSection from "@/components/HowItWorksSection";
 import PricingSection from "@/components/PricingSection";
 import ProofResultsSection from "@/components/ProofResultsSection";
 import RoiCalculator from "@/components/RoiCalculator";
+import SampleCallSection from "@/components/SampleCallSection";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -17,6 +18,7 @@ export default function HomePage() {
         <HeroSection />
         <RoiCalculator />
         <ProofResultsSection />
+        <SampleCallSection />
         <HowItWorksSection />
         <DashboardMockup />
         <HonestMathSection />

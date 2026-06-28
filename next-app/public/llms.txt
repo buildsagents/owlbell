@@ -1,0 +1,31 @@
+# Owlbell
+
+> Managed reception agency for US plumbing contractors.
+
+Owlbell answers inbound calls 24/7, qualifies leads, books appointments, and texts job details to the shop owner. It is a managed agency service — not self-serve software.
+
+## Service
+
+- Industry: US plumbing contractors only
+- Offering: 24/7 call answering, emergency routing, lead capture, booking, owner SMS alerts
+- Trial: 7-day trial on every plan; cancel during trial
+- Onboarding: White-glove setup via https://owlbell.xyz/onboarding
+
+## Pricing (monthly)
+
+- Launch: $1,497/mo — 24/7 answering, emergency routing, owner alerts
+- Growth: $4,997/mo — booking workflow, CRM handoff, dedicated success contact
+- Scale: $9,997+/mo — multi-location, custom SLAs, dedicated success lead
+
+## Contact
+
+- Email: hello@owlbell.xyz
+- Phone: not available yet
+
+## Key pages
+
+- Home: https://owlbell.xyz/
+- FAQ: https://owlbell.xyz/faq
+- Onboarding: https://owlbell.xyz/onboarding
+- Privacy: https://owlbell.xyz/privacy
+- Terms: https://owlbell.xyz/terms
