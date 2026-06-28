@@ -47,7 +47,7 @@ export default function SiteHeader() {
           className="agency-btn agency-btn--primary agency-btn--sm site-nav-cta"
           onClick={() => scrollTo("pricing")}
         >
-          Start Free Trial
+          Get Started
         </button>
       </nav>
     </header>

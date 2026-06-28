@@ -8,8 +8,8 @@ const COMPARISON_ROWS = [
   },
   {
     option: "Hiring a receptionist",
-    cost: "$3,000 – $5,000+",
-    calls: "Limited",
+    cost: "$4,000 – $6,000+",
+    calls: "Business hours",
     jobs: "2 – 6 (avg)",
     highlight: false,
   },
@@ -23,18 +23,25 @@ const COMPARISON_ROWS = [
   {
     option: "Owlbell Growth",
     cost: "$4,997",
-    calls: "Unlimited",
+    calls: "Unlimited 24/7",
     jobs: "Booking + recovery workflow",
     highlight: true,
+  },
+  {
+    option: "Owlbell Scale",
+    cost: "$9,997+",
+    calls: "Multi-location",
+    jobs: "Enterprise routing + SLAs",
+    highlight: false,
   },
 ];
 
 const SUPPORT_CARDS = [
   {
     id: "setup",
-    title: "Real Human Setup",
+    title: "White-Glove Agency Setup",
     description:
-      "A dedicated onboarding specialist configures your scripts, integrates your calendar, and builds the workflow around your business.",
+      "A dedicated onboarding specialist builds your scripts, wires your calendar, and configures routing — you never touch a dashboard on day one.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7Z" />
@@ -43,9 +50,9 @@ const SUPPORT_CARDS = [
   },
   {
     id: "support",
-    title: "Real Human Support",
+    title: "Dedicated Success Team",
     description:
-      "US-based team. Real humans who know your account. No chatbot ticket queue.",
+      "US-based humans who know your account, tune scripts monthly, and answer the phone when you need us — not a ticket queue.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
         <path strokeLinecap="round" strokeLinejoin="round" d="M4 14v2a2 2 0 0 0 2 2h1l2 3h6l2-3h1a2 2 0 0 0 2-2v-2M7 10a5 5 0 0 1 10 0v1H7v-1Z" />
@@ -71,14 +78,15 @@ export default function HonestMathSection() {
     <section className="section section--alt" id="honest-math">
       <div className="wrap">
         <header className="section-header section-header--wide">
-          <span className="section-eyebrow">Honest math</span>
-          <h2>Premium Only Works When the Loss Is Real</h2>
+          <span className="section-eyebrow">The honest math</span>
+          <h2>Premium Agency Pricing — When the Numbers Work</h2>
           <p>
-            We qualify around missed-call volume, average job value, and how fast
-            your team can fulfill the recovered demand.
+            At $1,497–$9,997/mo, Owlbell only makes sense when missed calls are
+            already costing you real revenue. We build around your call volume,
+            average job value, and crew capacity.
           </p>
           <p className="section-header-sub">
-            If the math does not support the fee, we will say that before you buy.
+            Subscribe online in minutes — white-glove onboarding starts within 24 hours.
           </p>
         </header>
 

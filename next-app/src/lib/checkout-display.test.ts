@@ -29,7 +29,7 @@ describe("getCheckoutDisplay", () => {
     expect(d.monthly).toBe(1497);
     expect(d.setupFee).toBeNull();
     expect(d.includeSetupFee).toBe(false);
-    expect(d.modalNote).toContain("No setup fee");
+    expect(d.modalNote).toContain("White-glove agency onboarding included");
   });
 
   it("returns Scale pricing with custom suffix support", () => {

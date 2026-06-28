@@ -16,7 +16,7 @@ const TRUST_BADGES = [
     ),
     text: (
       <>
-        <strong>7-day</strong> free trial
+        <strong>White-glove</strong> onboarding
       </>
     ),
   },
@@ -33,7 +33,7 @@ const TRUST_BADGES = [
     ),
     text: (
       <>
-        <strong>Done-for-you</strong> agency setup
+        <strong>Human-led</strong> setup & support
       </>
     ),
   },
@@ -61,7 +61,7 @@ export default function HeroSection() {
     <section className="hero section-hero">
       <div className="wrap hero-grid">
         <div className="hero-copy">
-          <span className="hero-eyebrow">Premium AI Reception · Plumbing Only</span>
+          <span className="hero-eyebrow">AI Receptionist Agency · Plumbing Only</span>
           <h1>Stop Losing $400+ Jobs to Voicemail</h1>
           <p className="hero-sub">
             The premium AI receptionist agency built exclusively for plumbing

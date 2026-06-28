@@ -21,7 +21,7 @@ export default function RoiCalculator() {
 
   return (
     <div className="roi-card agency-card">
-      <h2 className="roi-card-title">Revenue You Could Recover</h2>
+      <h2 className="roi-card-title">What Voicemail Is Costing You</h2>
 
       <div className="roi-field">
         <label htmlFor="missed-calls">Calls missed per week</label>
@@ -54,7 +54,7 @@ export default function RoiCalculator() {
       <div className="roi-result">
         <span className="roi-result-label">Potential recovered</span>
         <span className="roi-result-value">{formatCurrency(recoveredMonthly)}/mo</span>
-        <span className="roi-result-hint">potential recovered</span>
+        <span className="roi-result-hint">monthly revenue at risk</span>
       </div>
     </div>
   );

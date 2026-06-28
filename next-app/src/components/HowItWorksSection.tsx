@@ -3,7 +3,7 @@ const STEPS = [
     id: "answer",
     title: "1 — Answered in Under 2 Seconds",
     description:
-      "Our AI receptionists pick up instantly and greet callers like a pro.",
+      "Agency-trained receptionists pick up instantly — scripted, tuned, and managed by our team.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
         <path
@@ -26,9 +26,9 @@ const STEPS = [
   },
   {
     id: "triage",
-    title: "2 — AI Triages the Issue",
+    title: "2 — Qualified Like Your Best Dispatcher",
     description:
-      "We ask the right questions, identify the problem, and determine urgency.",
+      "We ask the right questions, identify urgency, and route emergencies — overseen by real humans.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
         <path
@@ -45,7 +45,7 @@ const STEPS = [
     id: "book",
     title: "3 — Booked on Your Calendar",
     description:
-      "Available appointments are found and confirmed in real time.",
+      "Appointments confirmed in real time with your availability rules — no double-books, no gaps.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
         <path
@@ -59,9 +59,9 @@ const STEPS = [
   },
   {
     id: "summary",
-    title: "4 — Instant Text Summary",
+    title: "4 — You Stay in Control",
     description:
-      "You get a clear text summary so you're informed and ready.",
+      "Instant text summaries with job details, so you walk into every call informed and ready.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
         <path
@@ -84,11 +84,12 @@ export default function HowItWorksSection() {
     <section className="section section--alt" id="how">
       <div className="wrap">
         <header className="section-header">
-          <span className="section-eyebrow">How it works</span>
-          <h2>Every Call Handled, Start to Finish</h2>
+          <span className="section-eyebrow">How the agency works</span>
+          <h2>A Managed Reception Team — Without the Payroll</h2>
           <p>
-            Professional AI reception for plumbing companies that answers,
-            qualifies, books, and keeps you in the loop—every time.
+            Owlbell is a done-for-you AI receptionist agency. We handle setup,
+            scripting, and ongoing tuning so every call is answered, qualified,
+            and booked like you hired a full-time front desk.
           </p>
         </header>
 

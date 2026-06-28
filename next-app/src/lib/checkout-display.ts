@@ -39,8 +39,8 @@ export function getCheckoutDisplay(plan: string) {
     modalTitle: `Subscribe to ${config.name}`,
     modalNote:
       config.setupFee !== null
-        ? `$${config.monthly.toLocaleString()}/mo after your trial. One-time setup fee of $${config.setupFee.toLocaleString()} due at checkout.`
-        : `$${config.monthly.toLocaleString()}/mo after your trial. No setup fee on Launch.`,
+        ? `$${config.monthly.toLocaleString()}/mo after your trial. Includes white-glove agency onboarding ($${config.setupFee.toLocaleString()} one-time).`
+        : `$${config.monthly.toLocaleString()}/mo after your trial. White-glove agency onboarding included.`,
   };
 }
 

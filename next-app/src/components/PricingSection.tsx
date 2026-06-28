@@ -28,11 +28,11 @@ const PLANS: PlanCard[] = [
     price: 1497,
     priceSuffix: "/mo",
     setupFee: null,
-    subtitle: "For owner-operators who need every call answered without hiring.",
+    subtitle: "Your managed reception agency — every call answered, zero hiring.",
     highlighted: false,
     cta: "Start 7-Day Trial",
     features: [
-      "AI receptionist trained on your business and service area",
+      "Agency-configured receptionist trained on your business and service area",
       "24/7 call answering, lead capture, and instant owner alerts",
       "One number or call-forwarding setup — we handle the wiring",
       "Emergency routing rules for after-hours and urgent jobs",
@@ -156,12 +156,11 @@ export default function PricingSection() {
         <div className="wrap">
           <header className="section-header">
             <span className="section-eyebrow section-eyebrow--pill">Pricing</span>
-            <h2>Managed Phone Conversion — Priced Like the Revenue It Recovers</h2>
+            <h2>Agency Pricing — Built for Companies That Can&apos;t Afford Missed Calls</h2>
             <p>
-              Owlbell is not a DIY chatbot. It is a done-for-you call conversion
-              system with human setup, script tuning, and ongoing optimization —
-              built for plumbing and trades companies where one missed call is a
-              $400+ job walking out the door.
+              Owlbell is a premium AI receptionist agency — not software you
+              configure yourself. Every plan includes human-led setup, script
+              tuning, and ongoing optimization from a dedicated success team.
             </p>
           </header>
 
@@ -209,8 +208,8 @@ export default function PricingSection() {
           </div>
 
           <p className="pricing-footnote">
-            All plans include a 7-day trial. Self-serve checkout — subscribe in
-            minutes, no sales call required. Cancel anytime during trial.
+            All plans include a 7-day trial with white-glove onboarding. Subscribe
+            online instantly — no sales call required. Cancel anytime during trial.
           </p>
         </div>
       </section>

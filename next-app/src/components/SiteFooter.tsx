@@ -13,7 +13,7 @@ export default function SiteFooter() {
           <div className="owl-logo-text site-footer-logo">
             Owl<span>bell</span>
           </div>
-          <p>Premium AI reception agency for plumbing companies.</p>
+          <p>Your AI receptionist agency — built exclusively for plumbing companies.</p>
         </div>
 
         <nav className="site-footer-nav" aria-label="Footer">
@@ -26,7 +26,7 @@ export default function SiteFooter() {
 
         <div className="site-footer-contact">
           <a href="mailto:hello@owlbell.xyz">hello@owlbell.xyz</a>
-          <span>7-day trial · instant checkout</span>
+          <span>White-glove onboarding · subscribe online</span>
         </div>
       </div>
 

@@ -70,15 +70,15 @@ const METRICS = [
 ];
 
 const TRANSCRIPT = [
-  { time: "10:24:13", speaker: "AI Receptionist", text: "Thank you for calling Summit Plumbing Co. This is Alex, your AI receptionist. How can I help you today?" },
+  { time: "10:24:13", speaker: "Owlbell Reception", text: "Thank you for calling Summit Plumbing Co. This is Alex with the Owlbell reception team. How can I help you today?" },
   { time: "10:24:18", speaker: "Caller", text: "Hi, yeah—I've got a burst pipe in my basement and water is everywhere. I need someone out ASAP." },
-  { time: "10:24:21", speaker: "AI Receptionist", text: "I'm so sorry to hear that. I can get a tech to you right away. Are you available this morning, or would afternoon work better?" },
+  { time: "10:24:21", speaker: "Owlbell Reception", text: "I'm so sorry to hear that. I can get a tech to you right away. Are you available this morning, or would afternoon work better?" },
   { time: "10:24:27", speaker: "Caller", text: "This morning if possible." },
-  { time: "10:24:29", speaker: "AI Receptionist", text: "Great. I have a 11:00 AM slot open with our lead tech, Jake. Does that work?" },
+  { time: "10:24:29", speaker: "Owlbell Reception", text: "Great. I have a 11:00 AM slot open with our lead tech, Jake. Does that work?" },
   { time: "10:24:33", speaker: "Caller", text: "Yeah, that's perfect." },
-  { time: "10:24:35", speaker: "AI Receptionist", text: "Excellent. You're all set for 11:00 AM. The tech will call when they're on the way. Is this the best number to reach you?" },
+  { time: "10:24:35", speaker: "Owlbell Reception", text: "Excellent. You're all set for 11:00 AM. The tech will call when they're on the way. Is this the best number to reach you?" },
   { time: "10:24:39", speaker: "Caller", text: "Yes." },
-  { time: "10:24:40", speaker: "AI Receptionist", text: "Thank you. If anything changes, we'll let you know. Have a good morning." },
+  { time: "10:24:40", speaker: "Owlbell Reception", text: "Thank you. If anything changes, we'll let you know. Have a good morning." },
 ];
 
 const NOTIFICATIONS = [
@@ -103,11 +103,12 @@ export default function DashboardMockup() {
     <section className="section" id="dashboard">
       <div className="wrap">
         <header className="section-header">
-          <span className="section-eyebrow">Your dashboard</span>
-          <h2>Every Call, Booking, and Dollar — One View</h2>
+          <span className="section-eyebrow">Agency command center</span>
+          <h2>Full Visibility Into Every Call Your Agency Handles</h2>
           <p>
-            Real-time visibility into recovered revenue, live calls, and instant
-            text summaries sent straight to your phone.
+            Your dedicated dashboard shows recovered revenue, live calls in
+            progress, and instant owner alerts — the same view our success team
+            uses to tune performance.
           </p>
         </header>
 
