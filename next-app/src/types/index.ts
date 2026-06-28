@@ -77,22 +77,22 @@ export const PLAN_DETAILS: Record<PlanTier, {
   features: string[];
 }> = {
   basic: {
-    name: 'Basic',
-    price: 297,
-    callLimit: 150,
-    features: ['24/7 AI call answering', 'Up to 150 calls/mo', 'Voicemail → text + email', 'Instant message alerts', '1 phone number'],
-  },
-  pro: {
-    name: 'Pro',
-    price: 797,
-    callLimit: 600,
-    features: ['Everything in Basic', 'Up to 600 calls/mo', 'Appointment booking + calendar', 'CRM integration & call routing', 'Analytics dashboard · 3 numbers'],
-  },
-  pro_plus: {
-    name: 'Pro Plus',
+    name: 'Launch',
     price: 1497,
     callLimit: 1500,
-    features: ['Everything in Pro', 'Up to 1,500 calls/mo', 'Priority support', 'Advanced analytics'],
+    features: ['Done-for-you AI call answering', 'Up to 1,500 calls/mo', 'Voicemail → text + email', 'Instant message alerts', '1 phone number', 'White-glove onboarding'],
+  },
+  pro: {
+    name: 'Growth',
+    price: 4997,
+    callLimit: 5000,
+    features: ['Everything in Launch', 'Up to 5,000 calls/mo', 'Appointment booking + calendar', 'CRM integration & call routing', 'Analytics dashboard · 3 numbers', 'Priority support'],
+  },
+  pro_plus: {
+    name: 'Scale',
+    price: 9997,
+    callLimit: 15000,
+    features: ['Everything in Growth', 'Up to 15,000 calls/mo', 'Advanced analytics', 'Multi-location workflows', 'Dedicated success lead', 'SLA options'],
   },
   enterprise: {
     name: 'Enterprise',

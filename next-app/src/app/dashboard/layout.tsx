@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           flexShrink: 0,
         }}>
           <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
-            Need help? Email <a href="mailto:buildsagents@gmail.com" style={{ color: 'var(--accent)' }}>support</a>
+            Need help? Email <a href="mailto:hello@owlbell.xyz" style={{ color: 'var(--accent)' }}>support</a>
           </span>
         </div>
 

@@ -1,22 +1,14 @@
-import { NextResponse } from 'next/server';
-import { createPortalSession } from '@/lib/stripe';
+import { NextResponse } from "next/server";
+import { DEPRECATED_WEBHOOK_MESSAGE, FASTAPI_V1 } from "@/lib/consolidation";
 
-export async function POST(request: Request) {
-  try {
-    const { customerId } = await request.json();
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://owlbell.xyz';
-
-    const url = await createPortalSession({
-      customerId,
-      returnUrl: `${baseUrl}/dashboard/billing`,
-    });
-
-    if (!url) {
-      return NextResponse.json({ error: 'Could not create portal session' }, { status: 500 });
-    }
-
-    return NextResponse.json({ url });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message ?? 'Internal error' }, { status: 500 });
-  }
+/** Deprecated — billing portal is on the Vite dashboard + FastAPI. */
+export async function POST() {
+  return NextResponse.json(
+    {
+      error: "gone",
+      message: DEPRECATED_WEBHOOK_MESSAGE,
+      use: `${FASTAPI_V1}/billing/portal`,
+    },
+    { status: 410 }
+  );
 }

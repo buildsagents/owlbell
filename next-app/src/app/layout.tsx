@@ -13,14 +13,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Owlbell — Your 24/7 AI Receptionist | Never Miss a Call Again",
-  description: "Owlbell answers your business calls 24/7, books appointments, and texts you every message instantly. For HVAC, plumbing, electrical, roofing, pest control & property managers. From $297/mo. Hear it live.",
-  keywords: "AI phone answering service, virtual receptionist, AI receptionist for contractors, HVAC answering service, plumbing answering service, 24/7 call answering, missed call solution",
-  openGraph: {
-    title: "Owlbell — Never Miss a Call Again",
-    description: "A 24/7 AI receptionist that answers, books jobs, and texts you instantly. From $297/mo.",
-    type: "website",
-  },
+  title: "Owlbell — Stop Losing $400 Jobs to Voicemail",
+  description:
+    "Plumbing companies get every call answered 24/7. Emergency calls routed, jobs booked on your calendar, details texted to you — AI built for the trades with real human setup and support.",
 };
 
 export default function RootLayout({
