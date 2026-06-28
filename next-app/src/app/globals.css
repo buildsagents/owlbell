@@ -497,6 +497,20 @@ summary:focus-visible {
   align-items: center;
 }
 
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-dark);
+  margin-bottom: var(--space-4);
+  padding: 6px 14px;
+  background: var(--brand-bg);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 999px;
+}
+
 .hero-copy h1 {
   font-family: var(--font-plus-jakarta-sans), sans-serif;
   font-size: var(--heading-1);
@@ -505,7 +519,7 @@ summary:focus-visible {
   line-height: 1.08;
   color: var(--ink);
   margin: 0 0 var(--space-5);
-  max-width: 11em;
+  max-width: 12em;
 }
 
 .hero-sub {

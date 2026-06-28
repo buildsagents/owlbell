@@ -13,9 +13,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Owlbell — Stop Losing $400 Jobs to Voicemail",
+  title: "Owlbell — Stop Losing $400+ Jobs to Voicemail",
   description:
-    "Plumbing companies get every call answered 24/7. Emergency calls routed, jobs booked on your calendar, details texted to you — AI built for the trades with real human setup and support.",
+    "The premium AI receptionist agency built exclusively for plumbing companies. Every call answered, jobs booked, and owners notified — instantly.",
 };
 
 export default function RootLayout({
