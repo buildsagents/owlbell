@@ -36,6 +36,7 @@ describe("getCheckoutDisplay", () => {
     const d = getCheckoutDisplay("pro_plus");
     expect(d.monthly).toBe(9997);
     expect(d.setupFee).toBe(1997);
+    expect(d.buttonText).toContain("Subscribe Now");
   });
 
   it("normalizes unknown plan to pro", () => {

@@ -14,10 +14,17 @@ const COMPARISON_ROWS = [
     highlight: false,
   },
   {
+    option: "Owlbell Launch",
+    cost: "$1,497",
+    calls: "Unlimited",
+    jobs: "Lead capture + alerts",
+    highlight: false,
+  },
+  {
     option: "Owlbell Growth",
     cost: "$4,997",
     calls: "Unlimited",
-    jobs: "Tracked recovery workflow",
+    jobs: "Booking + recovery workflow",
     highlight: true,
   },
 ];
@@ -81,7 +88,7 @@ export default function HonestMathSection() {
               <ShieldIcon />
             </div>
             <p className="honest-guarantee-text">
-              50 Growth clients at $4,997/mo is the clean path to $250k MRR
+              5 jobs booked in your first 30 days — or we keep working until you get there
             </p>
           </div>
 

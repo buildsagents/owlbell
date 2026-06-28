@@ -126,7 +126,6 @@ export default function PricingSection() {
           plan: modalPlan,
           period: "monthly",
           email: email.trim(),
-          founding: false,
           include_setup_fee: display.includeSetupFee,
         }),
       });

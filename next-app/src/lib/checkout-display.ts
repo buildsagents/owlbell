@@ -32,7 +32,10 @@ export function getCheckoutDisplay(plan: string) {
     monthly: config.monthly,
     setupFee: config.setupFee,
     includeSetupFee: config.setupFee !== null,
-    buttonText: `Start 7-Day Trial — ${config.name}`,
+    buttonText:
+      config.id === "pro_plus"
+        ? `Subscribe Now — ${config.name}`
+        : `Start 7-Day Trial — ${config.name}`,
     modalTitle: `Subscribe to ${config.name}`,
     modalNote:
       config.setupFee !== null
