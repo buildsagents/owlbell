@@ -10,7 +10,6 @@ export default function SiteFooter() {
         </div>
 
         <div className="site-footer-contact">
-          <a href="tel:+18885550199" className="num">(888) 555-0199</a>
           <a href="mailto:hello@owlbell.xyz">hello@owlbell.xyz</a>
         </div>
 

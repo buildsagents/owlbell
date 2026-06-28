@@ -2366,7 +2366,7 @@ summary:focus-visible {
 }
 
 .site-header--hero .site-nav-link,
-.site-header--hero .site-nav-phone {
+.site-header--hero .site-nav-email {
   color: rgba(255, 255, 255, 0.78);
 }
 
@@ -2394,7 +2394,7 @@ summary:focus-visible {
   height: 68px;
 }
 
-.site-nav-phone {
+.site-nav-email {
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--ink2);
@@ -2402,8 +2402,12 @@ summary:focus-visible {
   display: none;
 }
 
-.site-mobile-phone {
-  font-size: 1.125rem;
+.site-nav-email:hover {
+  color: var(--ink);
+}
+
+.site-mobile-email {
+  font-size: 1rem;
   font-weight: 500;
   color: var(--ink);
   text-decoration: none;
@@ -2411,7 +2415,7 @@ summary:focus-visible {
 }
 
 @media (min-width: 900px) {
-  .site-nav-phone {
+  .site-nav-email {
     display: block;
   }
 }
@@ -2495,10 +2499,15 @@ summary:focus-visible {
   border-top: 1px solid var(--line-dark);
 }
 
-.hero-dispatch-phone {
-  font-size: 1.125rem;
+.hero-dispatch-email {
+  font-size: 1.0625rem;
   color: #fff;
   text-decoration: none;
+  font-weight: 500;
+}
+
+.hero-dispatch-email:hover {
+  color: var(--copper-light);
 }
 
 .hero-dispatch-contact span {

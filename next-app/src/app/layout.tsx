@@ -51,7 +51,6 @@ const jsonLd = {
   name: "Owlbell",
   url: SITE_URL,
   email: "hello@owlbell.xyz",
-  telephone: "+1-888-555-0199",
   description: SITE_DESCRIPTION,
   areaServed: "US",
 };

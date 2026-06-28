@@ -52,8 +52,8 @@ export default function SiteHeader() {
         </div>
 
         <div className="site-nav-actions">
-          <a href="tel:+18885550199" className="site-nav-phone num">
-            (888) 555-0199
+          <a href="mailto:hello@owlbell.xyz" className="site-nav-email">
+            hello@owlbell.xyz
           </a>
           <button
             type="button"
@@ -93,8 +93,8 @@ export default function SiteHeader() {
               {item.label}
             </button>
           ))}
-          <a href="tel:+18885550199" className="site-mobile-phone num">
-            (888) 555-0199
+          <a href="mailto:hello@owlbell.xyz" className="site-mobile-email">
+            hello@owlbell.xyz
           </a>
           <button type="button" className="btn btn--copper btn--block" onClick={() => scrollTo("pricing")}>
             Start trial

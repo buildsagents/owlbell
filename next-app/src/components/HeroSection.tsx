@@ -40,10 +40,10 @@ export default function HeroSection() {
           </div>
 
           <div className="hero-dispatch-contact">
-            <a href="tel:+18885550199" className="hero-dispatch-phone num">
-              (888) 555-0199
+            <a href="mailto:hello@owlbell.xyz" className="hero-dispatch-email">
+              hello@owlbell.xyz
             </a>
-            <span>Talk to onboarding · Mon–Sat 7am–7pm CT</span>
+            <span>Questions before you subscribe? We reply within a few hours.</span>
           </div>
         </div>
 
