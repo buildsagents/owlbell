@@ -47,6 +47,30 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
+$PipelineLog = Join-Path $ScratchDir "pipeline_exercise.log"
+Write-Log "python -c exercise execute_self_serve_activation (plan step 3)"
+& $Python -c @"
+from backend.domain.onboarding.self_serve_pipeline import execute_self_serve_activation
+import json
+payload = {
+    'email': 'exercise@example.com',
+    'businessName': 'Exercise Co',
+    'selfServe': True,
+    'forwardNumber': '(512) 555-0100',
+    'voiceId': 'warm_professional',
+    'crmProvider': 'jobber',
+    'pricingTier': 'growth',
+}
+out = execute_self_serve_activation(payload)
+assert out['activated'] is True
+assert out['inbound_line'] != out['forward_line']
+print(json.dumps({'ok': out['ok'], 'activated': out['activated'], 'inbound_line': out['inbound_line'], 'forward_line': out['forward_line'], 'provision_mode': out['provision_mode']}))
+"@ 2>&1 | Tee-Object -FilePath $PipelineLog -Append | Tee-Object -FilePath $Log -Append
+if ($LASTEXITCODE -ne 0) {
+    Write-Log "pipeline exercise FAILED with exit $LASTEXITCODE"
+    exit $LASTEXITCODE
+}
+
 Write-Log "Pipeline: test_execute_self_serve_activation_zero_mocks + test_intake_handler_patches_only_persist_intake"
 
 Write-Log "run_plan_gates: PASS"

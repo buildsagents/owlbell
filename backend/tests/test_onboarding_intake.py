@@ -1,4 +1,8 @@
-"""HTTP tests for public onboarding intake endpoint (unit — mocked persistence)."""
+"""HTTP tests for public onboarding intake endpoint.
+
+Self-serve activation path: test_self_serve_pipeline.py (persist_intake stub only).
+These tests mock run_pipeline_after_store for legacy/non-self-serve error-path coverage.
+"""
 
 from __future__ import annotations
 

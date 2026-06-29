@@ -1,4 +1,9 @@
-"""Pure self-serve sandbox activation pipeline — zero I/O, importable without DB or Retell."""
+"""Pure self-serve sandbox activation pipeline — zero I/O, importable without DB or Retell.
+
+Sandbox inbound_line is synthetic (stable hash per email via derive_sandbox_inbound_line).
+It reserves a distinct line from forward_number but does NOT provision real PSTN until
+Retell/carrier forwarding is wired (plan non-goal in Windows gate env).
+"""
 
 from __future__ import annotations
 

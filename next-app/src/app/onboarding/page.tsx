@@ -149,8 +149,9 @@ export default function OnboardingPortal() {
           ? data.kbNotes.split("\n")[0]
           : defaultGreetingForVertical(data.vertical, data.businessName);
 
-      // Inbound/test line is server-assigned on activation (derive_sandbox_inbound_line).
-      // Client sends forwardNumber + numberChoice only; response returns inbound_line + forward_line.
+      // Full wizard config is sent below. Inbound/test PSTN line is NOT sent by the client —
+      // the server assigns inbound_line on activation (sandbox: derive_sandbox_inbound_line(email)).
+      // Client supplies forwardNumber (owner line to forward) and numberChoice (new vs forward).
       const payload = {
         email: data.email,
         businessName: data.businessName,

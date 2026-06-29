@@ -1,4 +1,9 @@
-"""Unit tests for server-side script version history."""
+"""Unit tests for server-side script version history.
+
+DB persistence and RAG re-index are exercised in business.py routes against TenantConfig;
+this module tests the pure merge logic (same as append_script_version in the route handler).
+Full Postgres roundtrip requires pgserver (skipped on Windows gates — plan non-goal).
+"""
 
 import pytest
 
