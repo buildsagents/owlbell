@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { FASTAPI_V1 } from "@/lib/consolidation";
+import { CTA_START_TRIAL, onboardingHref } from "@/lib/marketing-cta";
 import {
   formatSetupFee,
   friendlyCheckoutError,
@@ -10,9 +12,9 @@ import {
 } from "@/lib/checkout-display";
 
 const ONBOARDING = [
-  { day: "Day 0", text: "Subscribe + intake form" },
-  { day: "Day 1", text: "Scripts, calendar, routing built by your specialist" },
-  { day: "Day 2", text: "Test calls + go live on your line" },
+  { day: "Min 0", text: "Start free trial — self-serve onboarding" },
+  { day: "Min 15", text: "Voice, KB, calendar, CRM configured" },
+  { day: "Min 20", text: "First test call + dashboard access" },
 ];
 
 const PRIMARY_PLANS = [
@@ -21,7 +23,7 @@ const PRIMARY_PLANS = [
     name: "Launch",
     price: 1497,
     setupFee: null as number | null,
-    blurb: "Every call answered. Owner alerts. Agency handles the wiring.",
+    blurb: "Every call answered. Owner alerts. Self-serve setup in under 15 minutes.",
     features: [
       "24/7 answering + lead capture",
       "Emergency routing rules",
@@ -111,8 +113,13 @@ export default function PricingSection() {
         <div className="wrap">
           <header className="section-lead">
             <p className="kicker kicker--dark">Plans</p>
-            <h2>Agency pricing for shops that can&apos;t miss calls</h2>
-            <p>7-day trial on every plan. White-glove onboarding included. Cancel during trial.</p>
+            <h2>Self-serve pricing for shops that can&apos;t miss calls</h2>
+            <p>7-day trial on every plan. Configure in under 15 minutes. Cancel during trial.</p>
+            <p>
+              <Link href={onboardingHref({ source: "pricing" })} className="btn btn--copper">
+                {CTA_START_TRIAL} — no checkout required
+              </Link>
+            </p>
           </header>
 
           <div className="pricing-editorial-grid">
@@ -138,12 +145,18 @@ export default function PricingSection() {
                     <li key={f}>{f}</li>
                   ))}
                 </ul>
+                <Link
+                  href={onboardingHref({ source: "pricing", plan: plan.id })}
+                  className={`btn ${"featured" in plan && plan.featured ? "btn--copper" : "btn--outline"} btn--block`}
+                >
+                  {CTA_START_TRIAL}
+                </Link>
                 <button
                   type="button"
-                  className={`btn ${"featured" in plan && plan.featured ? "btn--copper" : "btn--outline"} btn--block`}
+                  className="btn btn--outline btn--block pricing-stripe-link"
                   onClick={() => openCheckout(plan.id)}
                 >
-                  Start 7-day trial
+                  Or pay via Stripe →
                 </button>
               </article>
             ))}

@@ -1,6 +1,6 @@
 export default function HonestMathSection() {
   return (
-    <section className="section section--ink" id="honest-math">
+    <section className="section section--ink" id="honest-math-detail">
       <div className="wrap honest-brief">
         <div className="honest-brief-copy">
           <p className="kicker">When it makes sense</p>
@@ -26,8 +26,8 @@ export default function HonestMathSection() {
           </div>
           <div className="honest-rule">
             <span className="honest-rule-label">Onboarding</span>
-            <p className="honest-rule-value">Live in ~1 business day</p>
-            <p className="honest-rule-note">Dedicated specialist · no self-serve setup</p>
+            <p className="honest-rule-value">Live in under 15 min</p>
+            <p className="honest-rule-note">Self-serve wizard · cloud-saved progress</p>
           </div>
         </div>
       </div>

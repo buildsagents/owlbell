@@ -129,7 +129,7 @@ CREATE INDEX IF NOT EXISTS idx_agents_org_id    ON agents(org_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_org_id  ON profiles(org_id);
 
 -- ============================================================
--- 7. Onboarding intake (post-checkout concierge portal)
+-- 7. Onboarding intake (post-checkout self-serve portal)
 --    Public can submit (customers aren't logged in at onboarding
 --    time); reads are restricted to the service role / ops.
 -- ============================================================

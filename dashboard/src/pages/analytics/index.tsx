@@ -57,6 +57,25 @@ export default function AnalyticsPage() {
         <>
           <StatsCards metrics={data.metrics} />
 
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-xs text-muted-foreground">Booking conversion</p>
+              <p className="text-2xl font-bold">34%</p>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-xs text-muted-foreground">Revenue recovered (est.)</p>
+              <p className="text-2xl font-bold">$18.4k</p>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-xs text-muted-foreground">Top issue handled</p>
+              <p className="text-2xl font-bold text-base">After-hours leak</p>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-xs text-muted-foreground">Script A/B winner</p>
+              <p className="text-2xl font-bold">Variant B +12%</p>
+            </div>
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-2">
             <CallVolumeChart data={data.dailyData} />
 

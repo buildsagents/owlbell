@@ -136,6 +136,26 @@ class WebSocketClient {
     }
   }
 
+  listenToCall(callId: string): void {
+    const tenant = useAuthStore.getState().tenant;
+    this.send({
+      type: "call_listen",
+      payload: { callId },
+      timestamp: new Date().toISOString(),
+      tenantId: tenant?.id ?? "",
+    });
+  }
+
+  takeOverCall(callId: string): void {
+    const tenant = useAuthStore.getState().tenant;
+    this.send({
+      type: "call_takeover",
+      payload: { callId },
+      timestamp: new Date().toISOString(),
+      tenantId: tenant?.id ?? "",
+    });
+  }
+
   private handleMessage(message: WebSocketMessage): void {
     if (this.heartbeatTimeoutTimer) {
       clearTimeout(this.heartbeatTimeoutTimer);

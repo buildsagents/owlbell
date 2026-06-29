@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { ScriptEditor } from "@/components/editors/ScriptEditor";
+import { RagConfigPanel } from "@/components/editors/RagConfigPanel";
 import { useFaqEntries, useKnowledgeDocuments } from "@/hooks/use-settings";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -25,6 +27,8 @@ export default function KnowledgeBasePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [newFaq, setNewFaq] = useState({ question: "", answer: "" });
   const [showNewFaq, setShowNewFaq] = useState(false);
+  const [ragChunk, setRagChunk] = useState(512);
+  const [ragTopK, setRagTopK] = useState(4);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -34,6 +38,13 @@ export default function KnowledgeBasePage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Knowledge Base" description="Documents and FAQs that train your AI" />
+
+      <RagConfigPanel
+        chunkSize={ragChunk}
+        topK={ragTopK}
+        onChunkSize={setRagChunk}
+        onTopK={setRagTopK}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -106,11 +117,13 @@ export default function KnowledgeBasePage() {
                 value={newFaq.question}
                 onChange={(e) => setNewFaq((f) => ({ ...f, question: e.target.value }))}
               />
-              <textarea
-                placeholder="Answer"
+              <ScriptEditor
+                storageKey="kb-faq-draft"
+                label="Answer"
+                placeholder="Write the answer callers should hear…"
                 value={newFaq.answer}
-                onChange={(e) => setNewFaq((f) => ({ ...f, answer: e.target.value }))}
-                className="min-h-[80px] w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                onChange={(answer) => setNewFaq((f) => ({ ...f, answer }))}
+                rows={4}
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => { setShowNewFaq(false); setNewFaq({ question: "", answer: "" }); }}>

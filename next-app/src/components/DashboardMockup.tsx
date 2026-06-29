@@ -1,6 +1,6 @@
 const FLOW = [
   { id: "ring", label: "Call rings", detail: "(303) 555-0187 · burst pipe emergency" },
-  { id: "answer", label: "Agency answers", detail: "Script matched to your shop · 1.8s" },
+  { id: "answer", label: "AI answers", detail: "Script matched to your shop · 1.8s" },
   { id: "book", label: "Slot confirmed", detail: "Tomorrow 11:00 AM · Jake (lead tech)" },
   { id: "text", label: "You're notified", detail: "SMS to owner line with full summary" },
 ];

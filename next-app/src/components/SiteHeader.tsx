@@ -4,16 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import OwlLogo from "@/components/OwlLogo";
+import { CTA_START_TRIAL, onboardingHref } from "@/lib/marketing-cta";
 
 const SCROLL_NAV = [
   { id: "results", label: "Workflow" },
-  { id: "how", label: "Agency" },
+  { id: "how", label: "How it works" },
   { id: "honest-math", label: "ROI" },
   { id: "pricing", label: "Plans" },
 ];
 
 const PAGE_NAV = [
-  { href: "/about", label: "About" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/compare", label: "Compare" },
+  { href: "/demo", label: "Demo" },
   { href: "/faq", label: "FAQ" },
 ];
 
@@ -84,13 +87,9 @@ export default function SiteHeader() {
           <a href="mailto:hello@owlbell.xyz" className="site-nav-email">
             hello@owlbell.xyz
           </a>
-          <button
-            type="button"
-            className="btn btn--copper btn--sm site-nav-cta"
-            onClick={() => scrollTo("pricing")}
-          >
-            Start trial
-          </button>
+          <Link href={onboardingHref({ source: "header" })} className="btn btn--copper btn--sm site-nav-cta">
+            {CTA_START_TRIAL}
+          </Link>
           <button
             type="button"
             className="site-nav-toggle"
@@ -135,9 +134,9 @@ export default function SiteHeader() {
           <a href="mailto:hello@owlbell.xyz" className="site-mobile-email">
             hello@owlbell.xyz
           </a>
-          <button type="button" className="btn btn--copper btn--block" onClick={() => scrollTo("pricing")}>
-            Start trial
-          </button>
+          <Link href={onboardingHref({ source: "header_mobile" })} className="btn btn--copper btn--block" onClick={closeMenu}>
+            {CTA_START_TRIAL}
+          </Link>
         </div>
       </div>
     </header>

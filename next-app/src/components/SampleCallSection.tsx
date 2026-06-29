@@ -29,7 +29,7 @@ export default function SampleCallSection() {
             <span />
           </div>
           <p className="sample-call-label">Emergency intake · After hours</p>
-          <p className="sample-call-duration num">~2:40</p>
+          <p className="sample-call-duration num">~3:00</p>
         </div>
       </div>
     </section>

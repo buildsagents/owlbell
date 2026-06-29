@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import TrustPage from "@/components/TrustPage";
+import { CTA_LAUNCH_AI, CTA_START_TRIAL, onboardingHref } from "@/lib/marketing-cta";
 
 /** Drop the MP3 at public/demos/plumbing-emergency-sample.mp3 to enable playback. */
 const DEMO_AUDIO_SRC = "/demos/plumbing-emergency-sample.mp3";
@@ -8,40 +9,36 @@ const DEMO_AUDIO_SRC = "/demos/plumbing-emergency-sample.mp3";
 export const metadata: Metadata = {
   title: "Sample Call — Owlbell",
   description:
-    "Listen to a sample plumbing emergency intake call — after-hours burst pipe, qualified and booked for morning dispatch.",
+    "Listen to a real Retell AI plumbing emergency intake — after-hours burst pipe, address captured, emergency flagged, on-call team notified.",
 };
 
 export default function DemoPage() {
   return (
     <TrustPage
       title="Sample call"
-      meta="Plumbing emergency intake · After hours · Composite recording"
+      meta="Plumbing emergency intake · After hours · Live Retell recording"
     >
       <section>
         <p>
-          This is what callers experience when your line forwards to Owlbell: fast
-          pickup, emergency qualification, address capture, and a booked window for
-          dispatch. The full recording is publishing shortly.
+          This is a real call through our Retell AI receptionist — not a voice-over or
+          marketing read. Burst pipe, basement flooding, after hours: Morgan qualifies
+          the emergency, captures the address, and routes to the on-call team.
         </p>
       </section>
 
       <section className="demo-player-wrap">
         <div className="demo-player">
-          <div className="demo-player-badge">Coming soon</div>
-          <p className="demo-player-title">Burst pipe · basement flooding · 11:04 PM</p>
+          <div className="demo-player-badge">Live recording</div>
+          <p className="demo-player-title">Burst pipe · basement flooding · ~11 PM</p>
           <p className="demo-player-desc">
-            Real intake flow — not a scripted marketing read. Same structure we deploy
-            on customer lines after onboarding.
+            Rapid Flow Plumbing demo agent (retell-Willa). Same intake structure we
+            deploy on customer lines after onboarding.
           </p>
 
-          <audio className="demo-audio" controls preload="none">
+          <audio className="demo-audio" controls preload="metadata">
             <source src={DEMO_AUDIO_SRC} type="audio/mpeg" />
             Your browser does not support embedded audio.
           </audio>
-
-          <p className="demo-player-note">
-            Audio file path: <code>public/demos/plumbing-emergency-sample.mp3</code>
-          </p>
         </div>
 
         <ul className="demo-callout-list">
@@ -63,9 +60,10 @@ export default function DemoPage() {
       <section>
         <h2>What you are hearing</h2>
         <p>
-          A composite example based on common after-hours plumbing emergencies. Your
-          scripts, voice, service area, and pricing guardrails are configured by our
-          team — this sample shows the <em>flow</em>, not your exact wording.
+          Caller reports a burst pipe at 4821 Maple Drive, Denver. Agent Morgan flags it
+          as an emergency, confirms Sarah Mitchell&apos;s callback number, and attempts
+          on-call transfer. Your shop gets this flow with your business name, service
+          area, and pricing guardrails — configured by our team during intake.
         </p>
         <p>
           Questions about recordings, ServiceTitan, or go-live timing? See the{" "}
@@ -73,12 +71,19 @@ export default function DemoPage() {
         </p>
       </section>
 
-      <section>
+      <section className="demo-sandbox">
+        <h2>Interactive sandbox</h2>
         <p>
-          <Link href="/#pricing" className="btn btn--copper">
-            Start 7-day trial
-          </Link>
+          Configure a sample agent in onboarding, then place a test call — no human demo booking required.
         </p>
+        <div className="hero-dispatch-actions">
+          <Link href={onboardingHref({ source: "demo" })} className="btn btn--copper">
+            {CTA_LAUNCH_AI}
+          </Link>
+          <Link href={onboardingHref({ source: "demo_trial" })} className="btn btn--outline">
+            {CTA_START_TRIAL}
+          </Link>
+        </div>
       </section>
     </TrustPage>
   );

@@ -38,8 +38,8 @@ export function getCheckoutDisplay(plan: string) {
     modalTitle: `Subscribe to ${config.name}`,
     modalNote:
       config.setupFee !== null
-        ? `$${config.monthly.toLocaleString()}/mo after your trial. Includes white-glove agency onboarding ($${config.setupFee.toLocaleString()} one-time).`
-        : `$${config.monthly.toLocaleString()}/mo after your trial. White-glove agency onboarding included.`,
+        ? `$${config.monthly.toLocaleString()}/mo after your trial. Includes guided onboarding & integrations ($${config.setupFee.toLocaleString()} one-time).`
+        : `$${config.monthly.toLocaleString()}/mo after your trial. Self-serve onboarding included.`,
   };
 }
 

@@ -12,11 +12,13 @@ from datetime import datetime
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 
-from api.dependencies import CurrentTenant, CurrentUser, get_db_session
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from api.dependencies import CurrentTenant, CurrentUser, DBSession
 from api.schemas.base import ResponseMeta, SuccessResponse
 from api.schemas.business import (
     AICallHandlingConfig,
@@ -37,6 +39,8 @@ from api.schemas.business import (
 )
 from backend.db.models.business import FAQEntry as FAQEntryModel
 from backend.db.models.tenant import Tenant, TenantConfig
+from backend.domain.scripts.version_service import append_script_version, list_script_versions
+from pydantic import BaseModel, Field
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/business", tags=["Business Settings"])
@@ -95,7 +99,8 @@ def _faq_db_to_schema(faq: FAQEntryModel) -> FAQEntry:
 )
 async def get_profile(
     tenant: Any = CurrentTenant,
-    db: Any = Depends(get_db_session),
+    user: Any = CurrentUser,
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[BusinessProfile]:
     """Get business profile."""
     t = await _get_tenant_model(db, tenant.id)
@@ -138,7 +143,7 @@ async def update_profile(
     body: ProfileUpdateRequest,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[BusinessProfile]:
     """Update business profile."""
     t = await _get_tenant_model(db, tenant.id)
@@ -161,7 +166,7 @@ async def update_profile(
         t.config_json = {**(t.config_json or {}), "description": body.description}
 
     await db.flush()
-    return await get_profile(tenant, db)
+    return await get_profile(tenant=tenant, db=db)
 
 
 # ---------------------------------------------------------------------------
@@ -177,12 +182,12 @@ async def update_profile(
 )
 async def get_settings(
     tenant: Any = CurrentTenant,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[BusinessSettings]:
     """Get complete business settings."""
-    profile_resp = await get_profile(tenant, db)
-    voice_resp = await get_voice_config(tenant, db)
-    handling_resp = await get_handling_config(tenant, db)
+    profile_resp = await get_profile(tenant=tenant, db=db)
+    voice_resp = await get_voice_config(tenant=tenant, db=db)
+    handling_resp = await get_handling_config(tenant=tenant, db=db)
 
     return SuccessResponse(
         data=BusinessSettings(
@@ -207,7 +212,7 @@ async def get_settings(
 )
 async def get_voice_config(
     tenant: Any = CurrentTenant,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[AIVoiceConfig]:
     """Get AI voice config."""
     config = await _get_or_create_tenant_config(db, tenant.id)
@@ -239,7 +244,7 @@ async def update_voice_config(
     body: AIVoiceUpdateRequest,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[AIVoiceConfig]:
     """Update AI voice configuration."""
     config = await _get_or_create_tenant_config(db, tenant.id)
@@ -269,7 +274,7 @@ async def update_voice_config(
 )
 async def get_handling_config(
     tenant: Any = CurrentTenant,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[AICallHandlingConfig]:
     """Get AI handling config."""
     config = await _get_or_create_tenant_config(db, tenant.id)
@@ -301,7 +306,7 @@ async def update_handling_config(
     body: AIHandlingUpdateRequest,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[AICallHandlingConfig]:
     """Update AI handling configuration."""
     config = await _get_or_create_tenant_config(db, tenant.id)
@@ -333,7 +338,7 @@ async def list_faq(
     category: str | None = None,
     search: str | None = None,
     tenant: Any = CurrentTenant,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[FAQListResponse]:
     """List FAQ entries."""
     stmt = select(FAQEntryModel).where(
@@ -385,7 +390,7 @@ async def create_faq(
     body: FAQCreateRequest,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[FAQEntry]:
     """Create FAQ entry."""
     faq = FAQEntryModel(
@@ -415,7 +420,7 @@ async def create_faq(
 async def get_faq(
     faq_id: uuid.UUID,
     tenant: Any = CurrentTenant,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[FAQEntry]:
     """Get FAQ entry."""
     result = await db.execute(
@@ -445,7 +450,7 @@ async def update_faq(
     body: FAQUpdateRequest,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[FAQEntry]:
     """Update FAQ entry."""
     result = await db.execute(
@@ -470,6 +475,7 @@ async def update_faq(
         faq.is_active = body.is_active
 
     await db.flush()
+    await db.refresh(faq)
 
     return SuccessResponse(
         data=_faq_db_to_schema(faq),
@@ -487,7 +493,7 @@ async def delete_faq(
     faq_id: uuid.UUID,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[dict]:
     """Delete FAQ entry."""
     result = await db.execute(
@@ -500,7 +506,7 @@ async def delete_faq(
     if not faq:
         raise HTTPException(status_code=404, detail="FAQ not found")
 
-    db.delete(faq)
+    await db.delete(faq)
     await db.flush()
 
     return SuccessResponse(
@@ -519,7 +525,7 @@ async def bulk_import_faq(
     body: FAQBulkImportRequest,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[dict]:
     """Bulk import FAQ entries."""
     if body.replace_existing:
@@ -566,7 +572,7 @@ async def bulk_import_faq(
 )
 async def get_routing_rules(
     tenant: Any = CurrentTenant,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[list[RoutingRule]]:
     """Get routing rules."""
     config = await _get_or_create_tenant_config(db, tenant.id)
@@ -609,7 +615,7 @@ async def update_routing_rules(
     body: RoutingRuleUpdateRequest,
     tenant: Any = CurrentTenant,
     user: Any = CurrentUser,
-    db: Any = Depends(get_db_session),
+    db: AsyncSession = DBSession,
 ) -> SuccessResponse[list[RoutingRule]]:
     """Update routing rules."""
     config = await _get_or_create_tenant_config(db, tenant.id)
@@ -636,3 +642,62 @@ async def update_routing_rules(
     logger.info("routing.updated", tenant_id=str(tenant.id), rule_count=len(rules))
 
     return await get_routing_rules(tenant, db)
+
+
+# ---------------------------------------------------------------------------
+# Script version history (server-side, synced to dashboard editors)
+# ---------------------------------------------------------------------------
+
+
+class ScriptVersionCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=8000)
+    label: str | None = Field(default=None, max_length=64)
+
+
+@router.get(
+    "/scripts/{script_key}/versions",
+    response_model=SuccessResponse[list[dict[str, Any]]],
+    summary="List script versions",
+    description="Version history for a greeting/script key (server-persisted).",
+)
+async def get_script_versions(
+    script_key: str,
+    tenant: Any = CurrentTenant,
+    db: AsyncSession = DBSession,
+) -> SuccessResponse[list[dict[str, Any]]]:
+    config = await _get_or_create_tenant_config(db, tenant.id)
+    ai = dict(config.ai_settings or {})
+    versions = list_script_versions(ai, script_key)
+    return SuccessResponse(data=versions, meta=ResponseMeta(request_id=""))
+
+
+@router.post(
+    "/scripts/{script_key}/versions",
+    response_model=SuccessResponse[dict[str, Any]],
+    summary="Save script version",
+    description="Append a new script version for rollback and RAG indexing.",
+)
+async def save_script_version(
+    script_key: str,
+    body: ScriptVersionCreate,
+    tenant: Any = CurrentTenant,
+    user: Any = CurrentUser,
+    db: AsyncSession = DBSession,
+) -> SuccessResponse[dict[str, Any]]:
+    config = await _get_or_create_tenant_config(db, tenant.id)
+    ai = dict(config.ai_settings or {})
+    ai, version = append_script_version(
+        ai,
+        script_key=script_key,
+        content=body.content,
+        label=body.label,
+    )
+    config.ai_settings = ai
+    await db.flush()
+    logger.info(
+        "script_version.saved",
+        tenant_id=str(tenant.id),
+        script_key=script_key,
+        version_id=version.get("id"),
+    )
+    return SuccessResponse(data=version, meta=ResponseMeta(request_id=""))

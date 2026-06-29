@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import { CTA_LAUNCH_AI, CTA_START_TRIAL, onboardingHref } from "@/lib/marketing-cta";
 
 const SITE_URL = "https://owlbell.xyz";
 const PAGE_URL = `${SITE_URL}/plumbing-ai-receptionist`;
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
     url: PAGE_URL,
     title: "AI Receptionist for Plumbers — Owlbell",
     description:
-      "Plumbing-only AI answering service. Emergencies flagged, jobs booked, owner texted — 24/7. Agency setup in about one business day.",
+      "Plumbing AI answering service. Self-serve setup in under 15 minutes — emergencies flagged, jobs booked, owner texted 24/7.",
   },
 };
 
@@ -31,7 +32,7 @@ const jsonLd = {
       url: PAGE_URL,
       name: "AI Receptionist for Plumbers",
       description:
-        "How Owlbell provides managed AI phone answering for US plumbing contractors — after-hours emergencies, missed-call recovery, and agency-led setup.",
+        "How Owlbell provides self-serve AI phone answering for US plumbing contractors — after-hours emergencies, missed-call recovery, and under-15-minute activation.",
       isPartOf: { "@id": `${SITE_URL}/#website` },
       about: { "@id": `${PAGE_URL}#service` },
       inLanguage: "en-US",
@@ -56,7 +57,7 @@ const jsonLd = {
         audienceType: "Plumbing contractors",
       },
       description:
-        "Managed reception agency that answers inbound plumbing calls 24/7, qualifies emergencies, books appointments on your calendar, and texts job summaries to the owner.",
+        "Self-serve AI receptionist that answers inbound plumbing calls 24/7, qualifies emergencies, books appointments on your calendar, and texts job summaries to the owner.",
       offers: {
         "@type": "Offer",
         url: `${SITE_URL}/#pricing`,
@@ -68,24 +69,24 @@ const jsonLd = {
   ],
 };
 
-const AGENCY_STEPS = [
+const SETUP_STEPS = [
   {
-    id: "forward",
-    label: "Forward your line",
+    id: "start",
+    label: "Start free trial",
     detail:
-      "You keep your existing business number. Calls route to Owlbell when you are on a job, at dinner, or closed for the night. No new marketing number required unless you want one.",
+      "Launch onboarding from any page — pick plumbing defaults, voice, and emergency routing. Progress saves to the cloud so you can resume on mobile or desktop.",
   },
   {
     id: "configure",
-    label: "We configure everything",
+    label: "Configure in minutes",
     detail:
-      "A dedicated specialist builds your greeting, emergency triage rules, service-area logic, FAQs, and calendar booking workflow from your onboarding intake — not a self-serve wizard.",
+      "You set greeting, triage rules, service area, FAQs, calendar, and CRM handoff in the self-serve wizard. Upload PDFs or paste scripts — fully self-serve setup.",
   },
   {
     id: "answer",
     label: "Every call answered",
     detail:
-      "Inbound calls are picked up in under two seconds. Burst pipes, water heaters, drain backups, and routine service requests each follow the script you approved.",
+      "Inbound calls are picked up in under two seconds. Burst pipes, water heaters, drain backups, and routine service requests follow your configured script.",
   },
   {
     id: "book",
@@ -97,13 +98,13 @@ const AGENCY_STEPS = [
     id: "notify",
     label: "You get the text",
     detail:
-      "A plain-English summary hits your phone: caller name, problem, time window, and estimated job value when available. Review on your schedule; call back when you are ready.",
+      "A plain-English summary hits your phone: caller name, problem, time window, and estimated job value when available.",
   },
   {
-    id: "tune",
-    label: "Ongoing script tuning",
+    id: "test",
+    label: "Test call & go live",
     detail:
-      "Plumbing seasonality, new services, and pricing changes get reflected in your scripts. The agency model means you email updates — we handle the wiring.",
+      "Activation provisions a dedicated Owlbell inbound line (Retell when configured, or sandbox). Forward your main line or dial inbound directly — first test call from the confirmation screen, typically under 15 minutes from signup.",
   },
 ];
 
@@ -120,22 +121,25 @@ export default function PlumbingAiReceptionistPage() {
         <section className="hero-dispatch" id="top">
           <div className="hero-dispatch-grid wrap">
             <div className="hero-dispatch-copy">
-              <p className="kicker">Plumbing contractors only · US-based agency team</p>
+              <p className="kicker">Plumbing contractors · Self-serve setup in under 15 minutes</p>
               <h1>
                 AI receptionist for plumbers.
                 <em> Every call answered.</em>
               </h1>
               <p className="hero-dispatch-lead">
-                Owlbell is a managed plumbing AI answering service — not software you
-                configure on a weekend. We answer after-hours emergencies, book standard
-                jobs on your calendar, and text you the details before voicemail picks up.
+                Self-serve AI receptionist built for plumbers — configure voice, scripts, and
+                routing in under 15 minutes. Answer after-hours emergencies, book jobs on your
+                calendar, and get owner texts before voicemail picks up.
               </p>
               <div className="hero-dispatch-actions">
-                <Link href="/#pricing" className="btn btn--copper">
-                  See pricing — from $1,497/mo
+                <Link href={onboardingHref({ vertical: "plumbing" })} className="btn btn--copper">
+                  {CTA_LAUNCH_AI}
+                </Link>
+                <Link href={onboardingHref({ vertical: "plumbing", source: "plumbing_page" })} className="btn btn--ghost-light">
+                  {CTA_START_TRIAL}
                 </Link>
                 <Link href="/demo" className="btn btn--ghost-light">
-                  Hear a live demo call
+                  Demo sandbox
                 </Link>
               </div>
               <div className="hero-dispatch-contact">
@@ -278,7 +282,7 @@ export default function PlumbingAiReceptionistPage() {
               <h2>Plumbing AI answering service vs. traditional call centers</h2>
               <p>
                 National answering services handle dentists, law firms, and HVAC in the same
-                queue. Owlbell is plumbing-only and agency-managed — one trade, one playbook.
+                queue. Owlbell is trade-tuned and self-serve — plumbing scripts out of the box.
               </p>
             </header>
 
@@ -303,11 +307,11 @@ export default function PlumbingAiReceptionistPage() {
               </article>
               <article className="call-flow-step seo-compare-featured">
                 <span className="call-flow-index num">Option C</span>
-                <h3>Owlbell agency model</h3>
+                <h3>Owlbell self-serve model</h3>
                 <p>
-                  $1,497–$9,997/mo. Specialists configure plumbing scripts, calendar rules,
-                  and emergency routing. 24/7 answering, owner SMS summaries, ongoing tuning —
-                  you do not manage the stack.
+                  $1,497–$9,997/mo. You configure plumbing scripts, calendar rules, and emergency
+                  routing in onboarding. 24/7 answering, owner SMS summaries, dashboard edits —
+                  chat/email support when you need a human.
                 </p>
               </article>
             </div>
@@ -367,26 +371,26 @@ export default function PlumbingAiReceptionistPage() {
                 If you are deciding between a first office hire and managed answering,
                 consider call volume and average job value. Shops above 80 inbound calls per
                 month with strong emergency mix often benefit from both — human during peak
-                hours, agency coverage everywhere else.{" "}
+                hours, AI coverage everywhere else.{" "}
                 <Link href="/about">Learn how we work with plumbing shops</Link>.
               </p>
             </div>
           </div>
         </section>
 
-        <section className="section section--ink" id="agency-model">
+        <section className="section section--ink" id="how-it-works">
           <div className="wrap">
             <header className="section-lead">
-              <p className="kicker">Agency model</p>
-              <h2>How Owlbell works — six steps from signup to live calls</h2>
+              <p className="kicker">How it works</p>
+              <h2>Six steps from signup to your first answered call</h2>
               <p>
-                You are not buying a login and a tutorial video. You are hiring a reception
-                agency that happens to run on AI infrastructure we maintain.
+                Self-serve onboarding provisions a dedicated Owlbell inbound line on Retell (or sandbox)
+                — fully self-serve, no waiting in a setup queue.
               </p>
             </header>
 
             <ol className="flow-steps seo-flow-steps--ink">
-              {AGENCY_STEPS.map((step, index) => (
+              {SETUP_STEPS.map((step, index) => (
                 <li key={step.id} className="flow-step">
                   <span className="flow-step-num num">{String(index + 1).padStart(2, "0")}</span>
                   <div>
@@ -399,9 +403,9 @@ export default function PlumbingAiReceptionistPage() {
 
             <div className="seo-prose seo-prose--ink">
               <p>
-                Onboarding typically completes in about one business day: subscribe, submit
-                your intake (services, service area, FAQs, calendar access), test calls with
-                your specialist, then flip forwarding live. Growth and Scale plans add CRM
+                Most shops activate in under 15 minutes: start trial, complete onboarding
+                (services, service area, FAQs, calendar), place a test call, then flip forwarding live.
+                Growth and Scale plans add CRM
                 handoff, missed-call recovery workflows, and dedicated success contact.
               </p>
               <p>
@@ -417,10 +421,10 @@ export default function PlumbingAiReceptionistPage() {
           <div className="wrap">
             <header className="section-lead section-lead--center">
               <p className="kicker kicker--dark">Pricing</p>
-              <h2>Agency plans for shops that cannot miss calls</h2>
+              <h2>Plans for shops that cannot miss calls</h2>
               <p>
                 Premium pricing for premium coverage. Every plan includes a 7-day trial and
-                white-glove onboarding.
+                guided self-serve onboarding.
               </p>
             </header>
 
@@ -469,8 +473,8 @@ export default function PlumbingAiReceptionistPage() {
 
             <div className="case-study-cta">
               <p>Ready to stop sending emergencies to voicemail?</p>
-              <Link href="/#pricing" className="btn btn--copper">
-                Start 7-day trial
+              <Link href={onboardingHref({ vertical: "plumbing", source: "plumbing_cta" })} className="btn btn--copper">
+                {CTA_START_TRIAL}
               </Link>
             </div>
           </div>
@@ -479,7 +483,7 @@ export default function PlumbingAiReceptionistPage() {
         <section className="section section--warm" id="who-its-for">
           <div className="wrap">
             <header className="section-lead">
-              <p className="kicker kicker--dark">Fit check</p>
+              <p className="kicker kicker--dark">Who it&apos;s for</p>
               <h2>Who a plumbing AI receptionist is built for</h2>
             </header>
 
@@ -503,7 +507,7 @@ export default function PlumbingAiReceptionistPage() {
                 <a href="mailto:hello@owlbell.xyz">hello@owlbell.xyz</a> with your city,
                 call volume, and average ticket. Read the full{" "}
                 <Link href="/faq">plumbing AI receptionist FAQ</Link>, explore our{" "}
-                <Link href="/about">agency background</Link>, or return to the{" "}
+                <Link href="/about">about Owlbell</Link>, or return to the{" "}
                 <Link href="/">Owlbell homepage</Link> for the ROI calculator and sample
                 workflow.
               </p>

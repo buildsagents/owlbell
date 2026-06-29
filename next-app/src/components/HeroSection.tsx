@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import PhoneAlert from "@/components/PhoneAlert";
+import ComplianceBadges from "@/components/marketing/ComplianceBadges";
+import { CTA_LAUNCH_AI, CTA_START_TRIAL, DEMO_PATH, onboardingHref } from "@/lib/marketing-cta";
 
 export default function HeroSection() {
   const scrollTo = (id: string) => {
@@ -11,39 +14,36 @@ export default function HeroSection() {
     <section className="hero-dispatch" id="top">
       <div className="hero-dispatch-grid wrap">
         <div className="hero-dispatch-copy">
-          <p className="kicker">Plumbing contractors only · US-based agency team</p>
+          <p className="kicker">Join 50+ service businesses · Self-serve in under 15 minutes</p>
           <h1>
-            Every emergency call answered.
-            <em> You get the text.</em>
+            Your AI Receptionist Answers Every Call,
+            <em> Books Every Job</em> — 24/7
           </h1>
           <p className="hero-dispatch-lead">
-            Owlbell is a managed reception agency — not software you configure.
-            We answer, qualify, book, and text you the job details before voicemail
-            ever picks up.
+            Owlbell is your AI receptionist for plumbing, HVAC, electrical, dental, legal, and more.
+            Configure voice, scripts, calendar, and routing yourself — then place your first test call
+            before you leave onboarding.
           </p>
 
           <div className="hero-dispatch-actions">
-            <button
-              type="button"
-              className="btn btn--copper"
-              onClick={() => scrollTo("pricing")}
-            >
-              Start 7-day trial
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost-light"
-              onClick={() => scrollTo("how")}
-            >
-              How the agency works
+            <Link href={onboardingHref({ source: "hero" })} className="btn btn--copper">
+              {CTA_LAUNCH_AI}
+            </Link>
+            <Link href={onboardingHref({ source: "hero_trial" })} className="btn btn--ghost-light">
+              {CTA_START_TRIAL}
+            </Link>
+            <button type="button" className="btn btn--ghost-light" onClick={() => scrollTo("honest-math")}>
+              See your exact ROI
             </button>
           </div>
 
+          <ComplianceBadges />
+
           <div className="hero-dispatch-contact">
-            <a href="mailto:hello@owlbell.xyz" className="hero-dispatch-email">
-              hello@owlbell.xyz
-            </a>
-            <span>Questions before you subscribe? We reply within a few hours.</span>
+            <Link href={DEMO_PATH} className="hero-dispatch-email">
+              Try demo sandbox →
+            </Link>
+            <span>Recorded calls + interactive sample — no human sales call required.</span>
           </div>
         </div>
 

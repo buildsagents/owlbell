@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import FaqAccordion from "@/components/FaqAccordion";
+import FaqSearch from "@/components/FaqSearch";
 import TrustPage from "@/components/TrustPage";
 import { FAQ_ITEMS } from "@/lib/faq-data";
+import { CTA_START_TRIAL, onboardingHref } from "@/lib/marketing-cta";
 
 export const metadata: Metadata = {
-  title: "FAQ — Owlbell",
+  title: "FAQ — Owlbell AI Receptionist",
   description:
-    "Answers for plumbing contractors: real person vs AI, call recording legality, ServiceTitan integration, go-live timeline, trial, setup fees, and after-hours coverage.",
+    "Self-serve setup, go-live in under 15 minutes, ServiceTitan integration, call recording compliance, trial terms, and after-hours coverage.",
 };
 
 const faqSchema = {
@@ -32,28 +33,27 @@ export default function FaqPage() {
       />
       <TrustPage
         title="Frequently asked questions"
-        meta="Straight answers for plumbing shop owners — no sales deck required"
+        meta="Straight answers for service business owners — searchable, no sales deck required"
         wide
       >
         <section className="faq-intro">
           <p>
-            The questions we hear on intake calls, in email, and from owners who got
-            burned by generic answering services. Still stuck?{" "}
+            Self-serve onboarding, compliance, integrations, and go-live timing. Still stuck?{" "}
             <a href="mailto:hello@owlbell.xyz">hello@owlbell.xyz</a>
           </p>
         </section>
 
-        <FaqAccordion items={FAQ_ITEMS} />
+        <FaqSearch items={FAQ_ITEMS} />
 
         <section className="faq-footer-cta">
-          <h2>Want to hear it before you subscribe?</h2>
+          <h2>Ready to launch?</h2>
           <p>
-            <Link href="/demo">Listen to a sample emergency call</Link> or read{" "}
-            <Link href="/about">how the agency works</Link>.
+            <Link href="/demo">Try the demo sandbox</Link> or{" "}
+            <Link href="/how-it-works">read how it works</Link>.
           </p>
           <p>
-            <Link href="/#pricing" className="btn btn--copper">
-              Start 7-day trial
+            <Link href={onboardingHref({ source: "faq" })} className="btn btn--copper">
+              {CTA_START_TRIAL}
             </Link>
           </p>
         </section>

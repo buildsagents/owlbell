@@ -3,7 +3,7 @@ import LegalDocument from "@/components/LegalDocument";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Owlbell",
-  description: "Terms governing use of the Owlbell AI receptionist agency for plumbing companies.",
+  description: "Terms governing use of the Owlbell self-serve AI receptionist for service businesses.",
 };
 
 export default function TermsPage() {

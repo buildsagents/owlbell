@@ -1,6 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { computeRoi, buildOnboardingQueryFromRoi } from "@/lib/roi-math";
+import { CTA_START_TRIAL, onboardingHref } from "@/lib/marketing-cta";
+import type { VerticalSlug } from "@/lib/verticals";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -10,27 +14,33 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-export default function RoiCalculator() {
+type Props = {
+  defaultVertical?: VerticalSlug;
+};
+
+export default function RoiCalculator({ defaultVertical }: Props) {
   const [missedPerWeek, setMissedPerWeek] = useState(12);
   const [avgJobValue, setAvgJobValue] = useState(400);
 
-  const recoveredMonthly = useMemo(
-    () => Math.max(0, missedPerWeek * 4 * avgJobValue),
-    [missedPerWeek, avgJobValue]
+  const inputs = useMemo(
+    () => ({ missedPerWeek, avgJobValue }),
+    [missedPerWeek, avgJobValue],
   );
 
-  const breakevenDays = useMemo(() => {
-    if (recoveredMonthly <= 0) return null;
-    const daily = recoveredMonthly / 30;
-    return Math.max(1, Math.ceil(1497 / daily));
-  }, [recoveredMonthly]);
+  const result = useMemo(() => computeRoi(inputs), [inputs]);
+
+  const signupHref = useMemo(() => {
+    const query = buildOnboardingQueryFromRoi(result, inputs);
+    const extra = defaultVertical ? `&vertical=${defaultVertical}` : "";
+    return `${onboardingHref()}?${query}${extra}`;
+  }, [result, inputs, defaultVertical]);
 
   return (
-    <div className="roi-strip">
+    <div className="roi-strip" id="honest-math">
       <div className="wrap roi-strip-inner">
         <div className="roi-strip-copy">
-          <h2>What voicemail is costing you</h2>
-          <p>Drag the sliders — most plumbing shops underestimate missed calls.</p>
+          <h2>See your exact ROI</h2>
+          <p>Drag the sliders — most service shops underestimate missed calls.</p>
         </div>
 
         <div className="roi-strip-controls">
@@ -66,13 +76,16 @@ export default function RoiCalculator() {
 
         <div className="roi-strip-result">
           <span className="roi-strip-label">Revenue at risk</span>
-          <span className="roi-strip-value num">{formatCurrency(recoveredMonthly)}</span>
+          <span className="roi-strip-value num">{formatCurrency(result.recoveredMonthly)}</span>
           <span className="roi-strip-hint">per month</span>
-          {breakevenDays !== null && recoveredMonthly > 1497 && (
+          {result.breakevenDays !== null && (
             <span className="roi-strip-breakeven">
-              Launch plan pays for itself in ~{breakevenDays} days at this rate
+              Launch plan pays for itself in ~{result.breakevenDays} days at this rate
             </span>
           )}
+          <Link href={signupHref} className="btn btn--copper roi-strip-cta">
+            {CTA_START_TRIAL} with these numbers
+          </Link>
         </div>
       </div>
     </div>

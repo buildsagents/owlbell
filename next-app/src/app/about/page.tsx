@@ -1,98 +1,110 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import TrustPage from "@/components/TrustPage";
+import { CTA_LAUNCH_AI, onboardingHref } from "@/lib/marketing-cta";
 
 export const metadata: Metadata = {
   title: "About — Owlbell",
   description:
-    "Owlbell is a US-based managed reception agency for plumbing contractors. Human-led onboarding, AI-powered answering, full process transparency.",
+    "Owlbell is a self-serve AI receptionist for US service businesses. Configure voice, scripts, and routing in under 15 minutes — with human support when you need it.",
 };
 
 export default function AboutPage() {
   return (
     <TrustPage
       title="About Owlbell"
-      meta="Managed reception for US plumbing contractors · Human-led setup · AI answers every call"
+      meta="AI receptionist for US service businesses · Self-serve setup · Human support on demand"
     >
       <section>
         <h2>What we are</h2>
         <p>
-          Owlbell is a <strong>managed reception agency</strong> — not a DIY phone bot
-          you configure on a Saturday. We answer, qualify, book, and text your team the
-          job details. Plumbing contractors only. US-based operations team.
+          Owlbell is a <strong>self-serve AI receptionist</strong> built for plumbing,
+          HVAC, electrical, dental, legal, and other appointment-driven service businesses.
+          You configure voice, scripts, hours, and integrations in onboarding — then go live
+          with a first test call in under 15 minutes.
         </p>
         <p>
-          You do not hire us to learn another dashboard. You hire us so every emergency
-          call gets answered before voicemail — nights, weekends, and lunch rush included.
+          We are not a generic call center and not a blank DIY bot. Owlbell is optimized for
+          emergency intake, booking, and owner alerts — the moments that cost you revenue when
+          voicemail picks up.
         </p>
       </section>
 
       <section>
         <h2>Who is behind it</h2>
         <p>
-          Owlbell is run by a small US-based agency team: onboarding specialists,
-          script writers, and customer success — people who have set up call workflows
-          for home-service businesses. There is no founder face or voice on the
-          homepage because this is an <strong>agency service</strong>, not a personal
-          brand play.
+          Owlbell is run by a small US-based team: product engineers, onboarding guides,
+          and customer success. There is no founder face or voice on the homepage because this
+          is a <strong>product service</strong>, not a personal brand play.
         </p>
         <p>
           Questions go to{" "}
-          <a href="mailto:hello@owlbell.xyz">hello@owlbell.xyz</a>. We reply within a
-          few hours on business days.
+          <a href="mailto:hello@owlbell.xyz">hello@owlbell.xyz</a>. We reply within a few
+          hours on business days. Chat and email support are included on every plan; live
+          chat escalation is available on Growth and Scale tiers.
         </p>
       </section>
 
       <section>
-        <h2>Plumbing only — on purpose</h2>
+        <h2>Self-serve first — humans when you need them</h2>
         <p>
-          We do not answer for HVAC, roofing, or law firms. Plumbing has predictable
-          emergency patterns, pricing guardrails, and dispatch logic. Narrow focus means
-          better scripts, faster onboarding, and fewer &ldquo;the AI said what?&rdquo;
-          moments.
+          Most owners complete onboarding without a call: business details, phone routing,
+          AI personality, knowledge base, calendar/CRM preferences, and plan selection. Your
+          progress saves to this device and the cloud so you can resume on any screen.
+        </p>
+        <p>
+          Inbound calls from <em>your customers</em> are answered 24/7. That is the product.
+          Owlbell support stays async (email/chat) unless you request a review session.
+        </p>
+      </section>
+
+      <section>
+        <h2>Vertical focus — on purpose</h2>
+        <p>
+          We ship vertical-specific landing pages and default scripts because emergency
+          patterns, pricing guardrails, and dispatch logic differ by trade. Narrow defaults
+          mean faster activation and fewer &ldquo;the AI said what?&rdquo; moments.
         </p>
         <ul>
           <li>Service areas and zip boundaries configured to your shop</li>
-          <li>Emergency triggers: burst pipes, active leaks, no water, sewer backup</li>
+          <li>Emergency triggers tuned per vertical (burst pipes, no heat, after-hours dental, etc.)</li>
           <li>Trip charges and quote guardrails — your numbers, not generic defaults</li>
           <li>Handoff to ServiceTitan, Jobber, Housecall Pro, or plain SMS summaries</li>
         </ul>
       </section>
 
       <section>
-        <h2>Human-led onboarding</h2>
-        <p>
-          Software-first tools hand you a blank script. We do the opposite:
-        </p>
+        <h2>How activation works</h2>
         <ol>
           <li>
-            <strong>Day 0:</strong> Subscribe and complete intake — services, areas,
-            pricing bounds, on-call rules.
+            <strong>Minutes 0–10:</strong> Complete the 7-step onboarding wizard — voice, KB,
+            calendar, CRM, and plan.
           </li>
           <li>
-            <strong>Day 1:</strong> Your specialist builds scripts, calendar rules, and
-            emergency routing.
+            <strong>Minute 10:</strong> Owlbell provisions your inbound AI line (Retell when
+            configured, or sandbox for instant testing).
           </li>
           <li>
-            <strong>Day 2:</strong> Test calls, forward your line, go live.
+            <strong>Minute 15:</strong> Place your first test call from the confirmation screen
+            and open your dashboard.
           </li>
         </ol>
         <p>
-          Script tuning is included — plumbing has edge cases, and we treat updates as
-          operations, not a support ticket.
+          Script tuning continues in the dashboard — update greetings, FAQs, and routing rules
+          anytime with version history.
         </p>
       </section>
 
       <section>
         <h2>AI answers the calls</h2>
         <p>
-          Callers hear a natural receptionist trained on <em>your</em> shop. Behind
-          that is AI optimized for plumbing intake: fast pickup (under two seconds),
-          structured data capture, and owner SMS summaries with estimated job value.
+          Callers hear a natural receptionist trained on <em>your</em> shop. Behind that is
+          AI optimized for service intake: fast pickup (under two seconds), structured data
+          capture, and owner SMS summaries with estimated job value when available.
         </p>
         <p>
-          Recordings and transcripts live in your dashboard. Disclosure language is
-          configured for your state&apos;s recording rules. See our{" "}
+          Recordings and transcripts live in your dashboard. Disclosure language is configured
+          for your state&apos;s recording rules. See our{" "}
           <Link href="/privacy">Privacy Policy</Link> for data handling.
         </p>
       </section>
@@ -102,36 +114,39 @@ export default function AboutPage() {
         <p>Nothing hidden behind &ldquo;contact sales&rdquo;:</p>
         <ul>
           <li>
-            <strong>Pricing:</strong> Launch $1,497/mo · Growth $4,997/mo — shown
-            before checkout
+            <strong>Pricing:</strong> Launch $1,497/mo · Growth $4,997/mo · Scale $9,997+/mo —
+            selectable in onboarding
           </li>
           <li>
-            <strong>Trial:</strong> 7 days, cancel before day seven to skip the first
-            monthly charge
+            <strong>Trial:</strong> 7 days, cancel before day seven to skip the first monthly
+            charge
           </li>
           <li>
             <strong>Workflow:</strong>{" "}
-            <Link href="/#how">Three steps on every call</Link> — answer, book, text
+            <Link href="/how-it-works">How it works</Link> — answer, qualify, book, notify
           </li>
           <li>
             <strong>Sample:</strong>{" "}
-            <Link href="/demo">Listen to a plumbing emergency intake</Link>
+            <Link href="/demo">Try the demo sandbox</Link>
           </li>
           <li>
-            <strong>Questions:</strong> <Link href="/faq">FAQ</Link> covers
-            ServiceTitan, recordings, after-hours, and more
+            <strong>Questions:</strong> <Link href="/faq">Searchable FAQ</Link> covers
+            integrations, recordings, after-hours, and more
           </li>
         </ul>
       </section>
 
       <section>
-        <h2>Ready to try it on your line?</h2>
+        <h2>Ready to launch your AI receptionist?</h2>
         <p>
-          Start a 7-day trial or email us first — whatever fits how you buy services
-          for your shop.
+          Start a 7-day trial in onboarding or email us first — whatever fits how you buy
+          services for your shop.
         </p>
         <p>
-          <Link href="/#pricing" className="btn btn--copper">
+          <Link href={onboardingHref({ source: "about" })} className="btn btn--copper">
+            {CTA_LAUNCH_AI}
+          </Link>{" "}
+          <Link href="/#pricing" className="btn btn--outline">
             View plans
           </Link>
         </p>

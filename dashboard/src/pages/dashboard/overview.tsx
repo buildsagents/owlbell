@@ -168,6 +168,24 @@ export default function DashboardPage() {
               desc="Google, Slack, CRM"
               onClick={() => navigate("/settings/integrations")}
             />
+            <QuickAction
+              icon={PhoneCall}
+              label="Test your AI now"
+              desc="Place a test call"
+              onClick={() => navigate("/calls/live")}
+            />
+            <QuickAction
+              icon={Phone}
+              label="Download call report"
+              desc="Export last 7 days"
+              onClick={() => navigate("/analytics")}
+            />
+            <QuickAction
+              icon={MessageSquare}
+              label="Request human review"
+              desc="Escalate script to support"
+              onClick={() => window.open("mailto:hello@owlbell.xyz?subject=Script%20review", "_blank")}
+            />
           </div>
         </div>
       </div>

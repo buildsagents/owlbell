@@ -1,58 +1,34 @@
 import type { MetadataRoute } from "next";
+import { VERTICALS } from "@/lib/verticals";
 
 const SITE_URL = "https://owlbell.xyz";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
 
-  return [
-    {
-      url: SITE_URL,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${SITE_URL}/privacy`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${SITE_URL}/terms`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${SITE_URL}/onboarding`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/faq`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/about`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/demo`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/plumbing-ai-receptionist`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-  ];
+  const staticPages = [
+    "",
+    "/privacy",
+    "/terms",
+    "/onboarding",
+    "/faq",
+    "/about",
+    "/demo",
+    "/how-it-works",
+    "/compare",
+  ].map((path) => ({
+    url: `${SITE_URL}${path}`,
+    lastModified,
+    changeFrequency: path === "" ? ("weekly" as const) : ("monthly" as const),
+    priority: path === "" ? 1 : path === "/onboarding" ? 0.9 : 0.7,
+  }));
+
+  const verticalPages = VERTICALS.map((v) => ({
+    url: `${SITE_URL}${v.path}`,
+    lastModified,
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
+  }));
+
+  return [...staticPages, ...verticalPages];
 }

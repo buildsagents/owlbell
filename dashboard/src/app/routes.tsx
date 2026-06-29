@@ -17,6 +17,7 @@ const MfaSetupPage = lazy(() => import("@/pages/auth/mfa-setup"));
 const DashboardPage = lazy(() => import("@/pages/dashboard/overview"));
 const CallsListPage = lazy(() => import("@/pages/calls/index"));
 const CallDetailPage = lazy(() => import("@/pages/calls/[callId]"));
+const LiveCallsPage = lazy(() => import("@/pages/calls/live"));
 const AnalyticsPage = lazy(() => import("@/pages/analytics/index"));
 const MessagesPage = lazy(() => import("@/pages/messages/index"));
 const AppointmentsPage = lazy(() => import("@/pages/appointments/index"));
@@ -107,6 +108,7 @@ export const router = createBrowserRouter([
         path: "calls",
         children: [
           { index: true, element: <CallsListPage /> },
+          { path: "live", element: <LiveCallsPage /> },
           { path: ":callId", element: <CallDetailPage /> },
         ],
       },

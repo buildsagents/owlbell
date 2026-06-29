@@ -6,7 +6,7 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { ErrorState } from "@/components/shared/error-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { ScriptEditor } from "@/components/editors/ScriptEditor";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { Bot, Save } from "lucide-react";
@@ -61,34 +61,24 @@ export default function AiPersonalityPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">Greeting Message</label>
-            <p className="text-xs text-muted-foreground mb-2">What the AI says when answering a call</p>
-            <Textarea
-              value={localSettings.greeting || settings.greeting || ""}
-              onChange={(e) => setLocalSettings((s) => ({ ...s, greeting: e.target.value }))}
-              placeholder="Hello, thank you for calling..."
-              maxLength={500}
-              rows={3}
-            />
-            <p className="mt-1 text-xs text-muted-foreground text-right">
-              {(localSettings.greeting || settings.greeting || "").length}/500
-            </p>
-          </div>
-          <div>
-            <label className="text-sm font-medium">Farewell Message</label>
-            <p className="text-xs text-muted-foreground mb-2">What the AI says before ending a call</p>
-            <Textarea
-              value={localSettings.farewell || settings.farewell || ""}
-              onChange={(e) => setLocalSettings((s) => ({ ...s, farewell: e.target.value }))}
-              placeholder="Thank you for calling, have a great day!"
-              maxLength={500}
-              rows={3}
-            />
-            <p className="mt-1 text-xs text-muted-foreground text-right">
-              {(localSettings.farewell || settings.farewell || "").length}/500
-            </p>
-          </div>
+          <ScriptEditor
+            storageKey="ai-greeting"
+            label="Greeting message"
+            placeholder="Hello, thank you for calling..."
+            maxLength={500}
+            rows={4}
+            value={localSettings.greeting || settings.greeting || ""}
+            onChange={(greeting) => setLocalSettings((s) => ({ ...s, greeting }))}
+          />
+          <ScriptEditor
+            storageKey="ai-farewell"
+            label="Farewell message"
+            placeholder="Thank you for calling, have a great day!"
+            maxLength={500}
+            rows={3}
+            value={localSettings.farewell || settings.farewell || ""}
+            onChange={(farewell) => setLocalSettings((s) => ({ ...s, farewell }))}
+          />
         </CardContent>
       </Card>
 

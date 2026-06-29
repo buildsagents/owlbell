@@ -9,12 +9,12 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "What is Owlbell?",
     answer:
-      "Owlbell is a managed reception agency for US plumbing contractors. We answer inbound calls 24/7, qualify leads, book appointments, and text job details to the owner — not software you configure yourself.",
+      "Owlbell is a self-serve AI receptionist for US service businesses — plumbing, HVAC, electrical, dental, legal, and more. You configure voice, scripts, and routing in onboarding; we answer inbound calls 24/7, book appointments, and text job details to you.",
   },
   {
     question: "Who is Owlbell for?",
     answer:
-      "Owlbell serves plumbing contractors only. We specialize in emergency call handling, after-hours routing, and booking workflows built for plumbing shops.",
+      "Owlbell serves established US service businesses that cannot afford to miss calls — especially after hours. Shops with meaningful call volume and average job values above ~$300 see the fastest ROI.",
   },
   {
     question: "What are the pricing tiers?",
@@ -24,17 +24,17 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Is there a free trial?",
     answer:
-      "Yes. Every plan includes a 7-day trial with white-glove onboarding. You can cancel during the trial period.",
+      "Yes. Start at owlbell.xyz/onboarding — fully self-serve, no sales call required. Every paid plan includes a 7-day trial. Cancel during the trial if coverage is not a fit.",
   },
   {
     question: "How do I get started?",
     answer:
-      "Subscribe to a plan, complete the onboarding intake at owlbell.xyz/onboarding, and your specialist builds scripts and routing. Most shops go live within two days.",
+      "Go to owlbell.xyz/onboarding, complete the self-serve wizard (voice, scripts, calendar, forwarding), and place your first test call to your Owlbell inbound line. Most owners finish in under 15 minutes.",
   },
   {
     question: "How do I contact Owlbell?",
     answer:
-      "Email hello@owlbell.xyz. We typically reply within a few hours. Phone support is not available yet.",
+      "Email hello@owlbell.xyz. We typically reply within a few hours on business days. Chat and email support are included; phone sales calls are not required.",
   },
 ];
 
@@ -57,10 +57,10 @@ export function buildServiceJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: "Owlbell Managed Reception",
+    name: "Owlbell AI Receptionist",
     url: SITE_URL,
     description:
-      "Managed reception agency for US plumbing contractors. We answer, book, and text job details — 24/7.",
+      "Self-serve AI receptionist for US service businesses. Answer, book, and text job details — 24/7.",
     provider: {
       "@type": "Organization",
       name: "Owlbell",
@@ -71,7 +71,7 @@ export function buildServiceJsonLd() {
       "@type": "Country",
       name: "United States",
     },
-    serviceType: "Managed reception for plumbing contractors",
+    serviceType: "AI phone answering for service businesses",
     offers: [
       {
         "@type": "Offer",

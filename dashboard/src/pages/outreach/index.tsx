@@ -28,18 +28,15 @@ import {
 import {
   Search,
   Mail,
-  MessageReply,
+  MessageSquareReply,
   TrendingUp,
   Users,
   Phone,
   Globe,
   Building2,
   MapPin,
-  ChevronDown,
-  ChevronUp,
   ExternalLink,
   Clock,
-  CheckCircle2,
   XCircle,
   AlertCircle,
   Send,
@@ -75,7 +72,7 @@ function OutcomeTimeline({ outcomes }: { outcomes: Lead["outcomes"] }) {
               {o.type === "sent" || o.type === "follow_up" ? (
                 <Send className="h-3 w-3 text-blue-600" />
               ) : o.type === "replied" ? (
-                <MessageReply className="h-3 w-3 text-emerald-600" />
+                <MessageSquareReply className="h-3 w-3 text-emerald-600" />
               ) : o.type === "bounced" ? (
                 <XCircle className="h-3 w-3 text-red-600" />
               ) : o.type === "unsubscribed" ? (
@@ -246,7 +243,7 @@ export default function OutreachPage() {
     {
       label: "Replies",
       value: stats?.totalReplied || 0,
-      icon: MessageReply,
+      icon: MessageSquareReply,
       color: "text-emerald-600",
       bg: "bg-emerald-50 dark:bg-emerald-950",
     },

@@ -21,7 +21,7 @@ const jetbrains = JetBrains_Mono({
 const SITE_URL = "https://owlbell.xyz";
 const SITE_TITLE = "Owlbell — Every emergency call answered";
 const SITE_DESCRIPTION =
-  "Managed reception agency for US plumbing contractors. We answer, book, and text you the job — 24/7.";
+  "Self-serve AI receptionist for US service businesses. Launch in under 15 minutes — answer, book, and text you the job 24/7.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

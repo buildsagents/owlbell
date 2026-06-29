@@ -45,7 +45,9 @@ export type WebSocketEventType =
   | "auth_success"
   | "auth_error"
   | "subscribed"
-  | "unsubscribed";
+  | "unsubscribed"
+  | "call_listen"
+  | "call_takeover";
 
 export interface WebSocketMessage {
   type: WebSocketEventType;

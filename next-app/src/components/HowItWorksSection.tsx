@@ -1,15 +1,18 @@
+import Link from "next/link";
+import { onboardingHref } from "@/lib/marketing-cta";
+
 const STEPS = [
   {
-    id: "answer",
-    label: "We answer",
+    id: "configure",
+    label: "You configure",
     detail:
-      "Your line forwards to Owlbell. Our agency-trained receptionist picks up in under two seconds — nights, weekends, and lunch rush included.",
+      "Pick your vertical, voice, scripts, calendar, and emergency rules in onboarding — saved to the cloud, resumable on any device.",
   },
   {
-    id: "book",
-    label: "We book",
+    id: "answer",
+    label: "AI answers",
     detail:
-      "Emergencies get flagged. Standard jobs land on your calendar with your availability rules — no double-books.",
+      "Callers reach your Owlbell inbound line. The AI picks up in under two seconds — nights, weekends, and lunch rush included.",
   },
   {
     id: "notify",
@@ -24,9 +27,9 @@ export default function HowItWorksSection() {
     <section className="section section--warm" id="how">
       <div className="wrap">
         <header className="section-lead">
-          <p className="kicker kicker--dark">Agency model</p>
+          <p className="kicker kicker--dark">How it works</p>
           <h2>Three things happen on every call</h2>
-          <p>Human-led setup. Ongoing script tuning. You never configure a dashboard on day one.</p>
+          <p>Self-serve setup. Retell-powered voice. First test call in minutes.</p>
         </header>
 
         <ol className="flow-steps">
@@ -40,6 +43,12 @@ export default function HowItWorksSection() {
             </li>
           ))}
         </ol>
+
+        <p className="vertical-selector-cta">
+          <Link href={onboardingHref({ source: "how_section" })} className="btn btn--copper">
+            Start free trial
+          </Link>
+        </p>
       </div>
     </section>
   );
