@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toTitleCase } from "@/lib/utils";
 import type { CallStatus, CallDirection } from "@/types/call";
-import { Phone, Search, X, Filter } from "lucide-react";
+import { Search, X, Filter } from "lucide-react";
 
 const STATUSES: CallStatus[] = ["ringing", "in_progress", "completed", "missed", "voicemail", "transferred", "failed"];
 const DIRECTIONS: CallDirection[] = ["inbound", "outbound"];
@@ -39,7 +39,7 @@ export default function CallsListPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Calls" description="View and manage all your AI-handled calls">
+      <PageHeader title="Calls" description="View and manage every handled call">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{data?.pagination?.total ?? 0} total</span>
         </div>
@@ -47,13 +47,13 @@ export default function CallsListPage() {
 
       {/* Active Calls Banner */}
       {activeCalls.length > 0 && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950">
+        <div className="rounded-lg border border-success/20 bg-success/5 p-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
             </span>
-            <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+            <span className="text-sm font-semibold text-success">
               {activeCalls.length} active {activeCalls.length === 1 ? "call" : "calls"}
             </span>
           </div>
@@ -85,7 +85,7 @@ export default function CallsListPage() {
           <select
             value={status || ""}
             onChange={(e) => setStatus((e.target.value as CallStatus) || null)}
-            className="h-10 rounded-md border bg-transparent px-3 text-sm"
+            className="h-10 rounded-md border bg-transparent px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="">All Statuses</option>
             {STATUSES.map((s) => (
@@ -95,7 +95,7 @@ export default function CallsListPage() {
           <select
             value={direction || ""}
             onChange={(e) => setDirection((e.target.value as CallDirection) || null)}
-            className="h-10 rounded-md border bg-transparent px-3 text-sm"
+            className="h-10 rounded-md border bg-transparent px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="">All Directions</option>
             {DIRECTIONS.map((d) => (
@@ -125,7 +125,7 @@ export default function CallsListPage() {
         <EmptyState
           title={hasFilters ? "No calls match filters" : "No calls yet"}
           description={hasFilters ? "Try adjusting your search or filters." : "Your call history will appear here once calls start coming in."}
-          icon={Phone}
+          illustration="calls"
         >
           {hasFilters && (
             <Button variant="outline" onClick={clearFilters}>

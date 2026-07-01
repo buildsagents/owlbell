@@ -43,7 +43,7 @@ export default function IntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Integrations" description="Connect third-party services to your AI" />
+      <PageHeader title="Integrations" description="Connect calendars, messaging, and CRM tools" />
 
       {isLoading ? <LoadingSpinner /> : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

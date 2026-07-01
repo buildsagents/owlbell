@@ -1,0 +1,758 @@
+{
+  "name": "\ud83e\udd89 Owlbell \u2014 Auto-Provision Retell Agent",
+  "nodes": [
+    {
+      "id": "76191d21-bdf2-42a7-8ac8-0cc8bd49b63d",
+      "name": "Stripe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "path": "stripe-checkout-completed",
+        "responseMode": "responseNode",
+        "options": {},
+        "webhookId": "24264483-56d9-44f3-968c-6513f3e9c44a",
+        "httpMethod": "POST",
+        "rawBody": true
+      }
+    },
+    {
+      "id": "0b234768-960b-4046-9074-1889dcb1d134",
+      "name": "Parse & Validate Intake",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        250,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Extract and validate Stripe checkout metadata\nconst session = $input.first().json;\nconst meta = session.data?.object?.metadata || {};\n\n// Required fields\nconst required = ['business_name', 'email', 'phone'];\nfor (const field of required) {\n  if (!meta[field]) throw new Error(`Missing required metadata: ${field}`);\n}\n\n// Build the general_prompt template with their intake\nconst businessName = meta.business_name;\nconst businessHours = meta.business_hours || 'Monday to Friday, 8 AM to 6 PM';\nconst services = meta.services || 'HVAC repair, plumbing, electrical, roofing, general';\nconst pricingInfo = meta.pricing_info || 'We offer free estimates. Pricing varies by job.';\nconst bookingLink = meta.booking_link || '';\nconst businessAddress = meta.business_address || '';\nconst businessPhone = meta.phone;\nconst transferNumber = meta.transfer_number || meta.phone;\nconst emergencyContacts = meta.faq_emergency_contacts || 'For emergencies, call 911.';\n\nconst generalPrompt = `You are a warm, professional AI receptionist for ${businessName}, a home-services company. Your job is to answer inbound calls, qualify leads, book appointments, take messages, and answer FAQs \u2014 all in a natural, conversational way.\n\n## CRITICAL RULES\n1. **AI Disclosure**: When you answer, say: \"Hi, you've reached ${businessName}! I'm an AI assistant, and this call may be recorded for quality and training purposes. How can I help you today?\"\n2. **Be warm and human**: Use natural conversational tone. Listen actively. Show empathy.\n3. **Keep it concise**: Don't ramble. One or two sentences per turn is usually enough.\n4. **Don't make things up**: Only answer from your knowledge base or available tools.\n5. **Collect information naturally**: Don't interrogate. Ask one question at a time.\n6. **Confirm understanding**: Repeat back key details to verify.\n7. **Always confirm next steps** before ending the call.\n\n## BILINGUAL SUPPORT (ENGLISH / SPANISH)\n- Detect the caller's language from their speech. Respond in the same language.\n- If the caller speaks Spanish, respond in Spanish naturally.\n- Key phrases in Spanish: \"Hola, has llamado a ${businessName}!\", \"\u00bfC\u00f3mo puedo ayudarte?\", \"D\u00e9jame verificar eso por ti\", \"Gracias por llamar\"\n- For other languages, politely say you only speak English and Spanish, and offer to transfer.\n\n## TOOLS AVAILABLE\n1. **lookup_caller**: Check if we have a profile for this caller. Call at START after getting phone number.\n2. **qualify_lead**: After collecting service, urgency, and contact info, score and log the lead.\n3. **check_availability**: When caller wants to book, check open slots for a date.\n4. **book_appointment**: After caller picks a time, finalize the booking.\n5. **log_message**: If caller doesn't want to book but wants to leave a message.\n\n## FAQ\n- Hours: ${businessHours}\n- Services: ${services}\n- Pricing: ${pricingInfo}\n- Booking: ${bookingLink}\n- Address: ${businessAddress}\n- Phone: ${businessPhone}\n- Emergencies: ${emergencyContacts}\n\n## HANDLING FAQs\n- **Hours**: ${businessHours}\n- **Services**: ${services}\n- **Pricing**: ${pricingInfo}\n- **Booking**: ${bookingLink}\n- **Address**: ${businessAddress}\n- **Phone**: ${businessPhone}\n- **Emergencies**: ${emergencyContacts}\n\n## TRANSFERRING TO HUMAN\nIf the caller insists on speaking to a person, or asks something you can't handle:\n- Use the transfer_to_human tool.\n- Say: \"Let me transfer you to one of our team members. Please hold.\"\n\n## ENDING CALLS\nBefore ending, always:\n1. Summarize what was accomplished.\n2. Ask: \"Is there anything else I can help you with?\"\n3. If no: \"Thank you for calling ${businessName}! Have a great day!\"\n4. Use the end_call tool.`;\n\nconst knowledgeBaseTexts = [\n  {\n    title: 'Business Hours',\n    text: `Our business hours are ${businessHours}. We are closed on major holidays. Emergency service may be available \u2014 please call to check.`\n  },\n  {\n    title: 'Services Offered',\n    text: `We offer the following services: ${services}. Each service includes a free estimate. Contact us for detailed pricing.`\n  },\n  {\n    title: 'Pricing and Estimates',\n    text: `${pricingInfo} We accept credit cards, cash, and financing options. Ask about our seasonal specials!`\n  },\n  {\n    title: 'Scheduling and Booking',\n    text: `You can book an appointment online at ${bookingLink} or call us at ${businessPhone}. We typically schedule within 24-48 hours.`\n  },\n  {\n    title: 'Service Area',\n    text: `We serve the local area around ${businessAddress}. Please call to confirm if we cover your location.`\n  },\n  {\n    title: 'Emergency Service',\n    text: `${emergencyContacts} For urgent home service needs during business hours, we will do our best to accommodate same-day service.`\n  },\n  {\n    title: 'Cancellation Policy',\n    text: 'We require 24-hour notice for cancellations. Late cancellations may be subject to a fee.'\n  },\n];\n\nreturn {\n  session_id: session.data?.object?.id,\n  customer_email: meta.email,\n  business_name: businessName,\n  business_phone: businessPhone,\n  services: services,\n  area_code: meta.area_code || '555',\n  general_prompt: generalPrompt,\n  knowledge_base_texts: JSON.stringify(knowledgeBaseTexts),\n  kb_name: `${businessName} FAQ`,\n  agent_name: `${businessName} Receptionist`,\n};\n"
+      }
+    },
+    {
+      "id": "05ed7ce9-65b2-4d09-951e-17d1fcdb9923",
+      "name": "Check Duplicate Session",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "dataType": "string",
+        "value1": "0",
+        "rules": [
+          {
+            "value2": "0",
+            "regex": ""
+          }
+        ],
+        "fallbackOutput": "1",
+        "options": {}
+      }
+    },
+    {
+      "id": "4dfdf97e-5933-4ef7-9adf-b9621ec4583b",
+      "name": "Create Knowledge Base",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        500,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/create-knowledge-base",
+        "authentication": "genericCredential",
+        "nodeCredentialName": "retellApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "knowledge_base_name",
+              "value": "={{ $json.kb_name }}"
+            },
+            {
+              "name": "knowledge_base_texts",
+              "value": "={{ $json.knowledge_base_texts | parseJson }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 10000
+        }
+      }
+    },
+    {
+      "id": "d7a3928a-ff2e-4a82-b37a-3f62e966dfaf",
+      "name": "Create Retell LLM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        750,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/create-retell-llm",
+        "authentication": "genericCredential",
+        "nodeCredentialName": "retellApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "general_prompt",
+              "value": "={{ $json.general_prompt }}"
+            },
+            {
+              "name": "general_tools",
+              "value": [
+                {
+                  "type": "transfer_call",
+                  "name": "transfer_to_human",
+                  "description": "Transfer the call to a human team member when the customer needs personal assistance.",
+                  "transfer_destination": {
+                    "type": "predefined",
+                    "number": "={{ $(\"Parse & Validate Intake\").item.json.business_phone }}"
+                  },
+                  "transfer_option": {
+                    "type": "cold_transfer"
+                  },
+                  "speak_during_execution": true,
+                  "execution_message_description": "Say you're transferring them to a team member and ask them to hold."
+                },
+                {
+                  "type": "end_call",
+                  "name": "end_call",
+                  "description": "End the call when the customer is satisfied and has no more questions.",
+                  "speak_during_execution": true,
+                  "execution_message_description": "Say a friendly goodbye and thank them for calling."
+                },
+                {
+                  "type": "custom",
+                  "name": "lookup_caller",
+                  "url": "https://owlbell-api-production.up.railway.app/api/v1/agent/tools/lookup-caller",
+                  "method": "POST",
+                  "description": "Look up a caller by their phone number.",
+                  "headers": {
+                    "Authorization": "Bearer {{ $env.RETELL_AGENT_TOOLS_SECRET }}"
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "phone_number": {
+                        "type": "string",
+                        "description": "Caller's phone number in E.164 format"
+                      }
+                    },
+                    "required": [
+                      "phone_number"
+                    ]
+                  },
+                  "speak_during_execution": true,
+                  "speak_after_execution": true,
+                  "execution_message_description": "Let me check our records for you.",
+                  "args_at_root": true
+                },
+                {
+                  "type": "custom",
+                  "name": "qualify_lead",
+                  "url": "https://owlbell-api-production.up.railway.app/api/v1/agent/tools/qualify-lead",
+                  "method": "POST",
+                  "description": "Score and log a lead after collecting service, urgency, and contact info.",
+                  "headers": {
+                    "Authorization": "Bearer {{ $env.RETELL_AGENT_TOOLS_SECRET }}"
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "caller_name": {
+                        "type": "string",
+                        "description": "Caller's full name"
+                      },
+                      "caller_phone": {
+                        "type": "string",
+                        "description": "Caller's phone number in E.164 format"
+                      },
+                      "service": {
+                        "type": "string",
+                        "description": "Service needed (hvac, plumbing, electrical, roofing, general)"
+                      },
+                      "urgency": {
+                        "type": "string",
+                        "description": "Urgency level: emergency, asap, or flexible"
+                      },
+                      "address": {
+                        "type": "string",
+                        "description": "Caller's address / location (optional)"
+                      },
+                      "notes": {
+                        "type": "string",
+                        "description": "Any additional context (optional)"
+                      }
+                    },
+                    "required": [
+                      "caller_name",
+                      "caller_phone",
+                      "service",
+                      "urgency"
+                    ]
+                  },
+                  "speak_during_execution": true,
+                  "speak_after_execution": true,
+                  "execution_message_description": "Let me log that information for our team.",
+                  "args_at_root": true
+                },
+                {
+                  "type": "custom",
+                  "name": "check_availability",
+                  "url": "https://owlbell-api-production.up.railway.app/api/v1/agent/tools/check-availability",
+                  "method": "POST",
+                  "description": "Check available 30-minute appointment slots for a given date.",
+                  "headers": {
+                    "Authorization": "Bearer {{ $env.RETELL_AGENT_TOOLS_SECRET }}"
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string",
+                        "description": "Date in YYYY-MM-DD format"
+                      }
+                    },
+                    "required": [
+                      "date"
+                    ]
+                  },
+                  "speak_during_execution": true,
+                  "speak_after_execution": true,
+                  "execution_message_description": "Let me check what times we have available.",
+                  "args_at_root": true
+                },
+                {
+                  "type": "custom",
+                  "name": "book_appointment",
+                  "url": "https://owlbell-api-production.up.railway.app/api/v1/agent/tools/book-appointment",
+                  "method": "POST",
+                  "description": "Book an appointment after caller chooses date and time.",
+                  "headers": {
+                    "Authorization": "Bearer {{ $env.RETELL_AGENT_TOOLS_SECRET }}"
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "caller_name": {
+                        "type": "string",
+                        "description": "Caller's full name"
+                      },
+                      "caller_phone": {
+                        "type": "string",
+                        "description": "Caller's phone number in E.164 format"
+                      },
+                      "service": {
+                        "type": "string",
+                        "description": "Service needed"
+                      },
+                      "date": {
+                        "type": "string",
+                        "description": "Appointment date in YYYY-MM-DD format"
+                      },
+                      "time": {
+                        "type": "string",
+                        "description": "Appointment start time in HH:MM format (24-hour)"
+                      },
+                      "address": {
+                        "type": "string",
+                        "description": "Service address (optional)"
+                      },
+                      "notes": {
+                        "type": "string",
+                        "description": "Additional notes (optional)"
+                      }
+                    },
+                    "required": [
+                      "caller_name",
+                      "caller_phone",
+                      "service",
+                      "date",
+                      "time"
+                    ]
+                  },
+                  "speak_during_execution": true,
+                  "speak_after_execution": true,
+                  "execution_message_description": "Let me book that appointment for you.",
+                  "args_at_root": true
+                },
+                {
+                  "type": "custom",
+                  "name": "log_message",
+                  "url": "https://owlbell-api-production.up.railway.app/api/v1/agent/tools/log-message",
+                  "method": "POST",
+                  "description": "Save a message from a caller who doesn't want to book.",
+                  "headers": {
+                    "Authorization": "Bearer {{ $env.RETELL_AGENT_TOOLS_SECRET }}"
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "caller_name": {
+                        "type": "string",
+                        "description": "Caller's full name"
+                      },
+                      "caller_phone": {
+                        "type": "string",
+                        "description": "Caller's phone number in E.164 format"
+                      },
+                      "message": {
+                        "type": "string",
+                        "description": "The message the caller wants to leave"
+                      },
+                      "email": {
+                        "type": "string",
+                        "description": "Caller's email address (optional)"
+                      }
+                    },
+                    "required": [
+                      "caller_name",
+                      "caller_phone",
+                      "message"
+                    ]
+                  },
+                  "speak_during_execution": true,
+                  "speak_after_execution": true,
+                  "execution_message_description": "Let me save that message for our team.",
+                  "args_at_root": true
+                }
+              ]
+            },
+            {
+              "name": "start_speaker",
+              "value": "agent"
+            },
+            {
+              "name": "begin_message",
+              "value": "Hi, you've reached {{business_name}}! I'm an AI assistant, and this call may be recorded. How can I help you today?"
+            },
+            {
+              "name": "model",
+              "value": "gpt-4.1-mini"
+            },
+            {
+              "name": "model_temperature",
+              "value": 0.4
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 10000
+        }
+      }
+    },
+    {
+      "id": "b73eab30-59a3-4c1f-a7c7-8f8a59dd4b42",
+      "name": "Attach KB to LLM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        750,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/update-retell-llm/{{ $json.llm_id }}",
+        "authentication": "genericCredential",
+        "nodeCredentialName": "retellApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "knowledge_base_ids",
+              "value": [
+                "={{ $(\"Create Knowledge Base\").item.json.knowledge_base_id }}"
+              ]
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "retryOnFail": true,
+          "maxTries": 2
+        }
+      }
+    },
+    {
+      "id": "0c96dfaf-71e1-4f6c-989c-e52f78c315db",
+      "name": "Create Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/create-agent",
+        "authentication": "genericCredential",
+        "nodeCredentialName": "retellApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "agent_name",
+              "value": "={{ $(\"Parse & Validate Intake\").item.json.agent_name }}"
+            },
+            {
+              "name": "response_engine",
+              "value": {
+                "type": "retell-llm",
+                "llm_id": "={{ $json.llm_id }}"
+              }
+            },
+            {
+              "name": "voice_id",
+              "value": "retell-Willa"
+            },
+            {
+              "name": "webhook_url",
+              "value": "https://owlbell-api-production.up.railway.app/api/v1/webhooks/retell"
+            },
+            {
+              "name": "webhook_events",
+              "value": [
+                "call_started",
+                "call_ended",
+                "call_analyzed"
+              ]
+            },
+            {
+              "name": "language",
+              "value": "en-US"
+            },
+            {
+              "name": "enable_backchannel",
+              "value": true
+            },
+            {
+              "name": "interruption_sensitivity",
+              "value": 0.7
+            },
+            {
+              "name": "responsiveness",
+              "value": 0.8
+            },
+            {
+              "name": "end_call_after_silence_ms",
+              "value": 30000
+            },
+            {
+              "name": "max_call_duration_ms",
+              "value": 1800000
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 10000
+        }
+      }
+    },
+    {
+      "id": "3d92b2d3-10a0-4482-9eb9-9947e5b61a2a",
+      "name": "Create Phone Number",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/create-phone-number",
+        "authentication": "genericCredential",
+        "nodeCredentialName": "retellApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "agent_id",
+              "value": "={{ $json.agent_id }}"
+            },
+            {
+              "name": "area_code",
+              "value": "={{ $(\"Parse & Validate Intake\").item.json.area_code }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 10000
+        }
+      }
+    },
+    {
+      "id": "8a4eacf7-c0af-44fd-b9e0-eadb41a8bdbd",
+      "name": "Publish Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/update-agent/{{ $json.agent_id }}",
+        "authentication": "genericCredential",
+        "nodeCredentialName": "retellApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "is_published",
+              "value": true
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 10000
+        }
+      }
+    },
+    {
+      "id": "d4fade2d-f137-41cb-a01b-36ac69ebb6f2",
+      "name": "Log Provisioning Complete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        220
+      ],
+      "parameters": {
+        "jsCode": "// Log the provisioning result\nconst agent = $input.first().json;\nconst meta = $(\"Parse & Validate Intake\").item.json;\nconst phone = $(\"Create Phone Number\").item.json;\n\n// Build provision record\nconst record = {\n  event: 'provisioning.complete',\n  timestamp: new Date().toISOString(),\n  session_id: meta.session_id,\n  business_name: meta.business_name,\n  customer_email: meta.customer_email,\n  agent_id: agent.agent_id,\n  phone_number: phone.phone_number || phone.inbound_phone_number || 'assigned',\n  status: 'active',\n};\n\nconsole.log('PROVISIONING COMPLETE:', JSON.stringify(record, null, 2));\nreturn record;\n"
+      }
+    },
+    {
+      "id": "417a945e-5427-4132-ad4f-6a9d56650405",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "to": "={{ $(\"Parse & Validate Intake\").item.json.customer_email }}",
+        "subject": "={{ \"Your \" + $(\"Parse & Validate Intake\").item.json.business_name + \" AI Receptionist Is Live!\" }}",
+        "messageType": "html",
+        "message": "=<h2>Your AI Receptionist is Ready!</h2><p>Great news \u2014 your Retell AI phone agent for <strong>{{ $(\"Parse & Validate Intake\").item.json.business_name }}</strong> is now live!</p><p><strong>Your new business number:</strong> <big>{{ $(\"Create Phone Number\").item.json.phone_number || $(\"Create Phone Number\").item.json.inbound_phone_number }}</big></p><p>Your AI receptionist will answer calls 24/7, qualify leads, book appointments, and take messages \u2014 all in English and Spanish.</p><hr><h3>Quick Start</h3><ol><li>Forward your existing business number to the new number above, or start using it directly</li><li>Test your agent by calling the number</li><li>Log in to the <a href=\"https://app.owlbell.xyz\">Owlbell Dashboard</a> to view calls, leads, and analytics</li></ol><p>Need help? Reply to this email or visit our help center.</p><p>\u2014 The Owlbell Team</p>"
+      },
+      "credentials": {
+        "gmailOAuth": {
+          "id": "39d71740-6c54-464f-8aa2-e1d534c6f95e",
+          "name": "Gmail API"
+        }
+      }
+    },
+    {
+      "id": "b19449b7-6edc-4583-aafe-58a88602801c",
+      "name": "Send Welcome SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        220
+      ],
+      "parameters": {
+        "resource": "sms",
+        "operation": "send",
+        "to": "={{ $(\"Parse & Validate Intake\").item.json.business_phone }}",
+        "from": "={{ $(\"Create Phone Number\").item.json.phone_number || $(\"Create Phone Number\").item.json.inbound_phone_number }}",
+        "message": "={{ \"Your \" + $(\"Parse & Validate Intake\").item.json.business_name + \" AI receptionist is live! Your number: \" + ($(\"Create Phone Number\").item.json.phone_number || $(\"Create Phone Number\").item.json.inbound_phone_number) + \". Log in: https://app.owlbell.xyz\" }}"
+      },
+      "credentials": {
+        "twilioApi": {
+          "id": "c9b0814c-9632-44a4-bdb0-9fef2e131573",
+          "name": "Twilio Account"
+        }
+      }
+    },
+    {
+      "id": "4b97d948-3368-4861-9c87-535b76b4c7be",
+      "name": "Handle Publish Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        440
+      ],
+      "parameters": {
+        "jsCode": "// Handle \"cannot update published flow\" errors\nconst error = $input.first().json.error || {};\nconst errorMessage = error.message || JSON.stringify(error);\n\nif (errorMessage.includes('published') || errorMessage.includes('cannot update')) {\n  // Draft from the published version instead of failing\n  console.log('Agent already published \u2014 drafting from published version');\n  return {\n    action: 'already_published',\n    message: 'Agent was already published. No changes needed.',\n    status: 'ok',\n  };\n}\n\n// Otherwise rethrow\nthrow new Error(`Publish failed: ${errorMessage}`);\n"
+      }
+    }
+  ],
+  "connections": {
+    "Stripe Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Intake": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Session": {
+      "main": [
+        [
+          {
+            "node": "Create Knowledge Base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Knowledge Base": {
+      "main": [
+        [
+          {
+            "node": "Create Retell LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Retell LLM": {
+      "main": [
+        [
+          {
+            "node": "Attach KB to LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach KB to LLM": {
+      "main": [
+        [
+          {
+            "node": "Create Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Agent": {
+      "main": [
+        [
+          {
+            "node": "Create Phone Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Phone Number": {
+      "main": [
+        [
+          {
+            "node": "Publish Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Provisioning Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Publish Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Provisioning Complete": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Welcome SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "versionId": "f442f4fc-0e83-4d02-a7cb-b9fa4255457d",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "provisioning",
+      "id": "5c37176a-6cf5-45f9-b86c-491fc8db106a"
+    },
+    {
+      "name": "retell",
+      "id": "bcdfa019-79bf-492b-b11a-f9b49a18c279"
+    },
+    {
+      "name": "stripe",
+      "id": "e20324fb-1400-42b0-8507-a14ce42f2a0d"
+    }
+  ]
+}

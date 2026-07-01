@@ -41,7 +41,8 @@ export function Header() {
     <header
       className={cn(
         "fixed right-0 top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
-        sidebarCollapsed ? "left-16" : "left-64"
+        "left-0 lg:left-64",
+        sidebarCollapsed && "lg:left-16"
       )}
     >
       <div className="flex items-center gap-3">

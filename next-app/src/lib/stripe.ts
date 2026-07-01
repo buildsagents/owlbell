@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { PlanTier } from '@/types';
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('[stripe] STRIPE_SECRET_KEY not set — billing features disabled.');
+  console.warn('[stripe] STRIPE_SECRET_KEY not set - billing features disabled.');
 }
 
 export const stripe = process.env.STRIPE_SECRET_KEY
@@ -13,7 +13,7 @@ export const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 
 // ---------------------------------------------------------------------------
-// Plan → Stripe Price ID mapping
+// Plan -> Stripe Price ID mapping
 // Set these in .env.local after creating products in your Stripe dashboard.
 // ---------------------------------------------------------------------------
 export const STRIPE_PRICE_IDS: Record<PlanTier, string | undefined> = {

@@ -1,40 +1,28 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-display",
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
-  axes: ["opsz"],
-});
-
-const dmSans = DM_Sans({
-  variable: "--font-body",
-  subsets: ["latin"],
-});
-
-const jetbrains = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 const SITE_URL = "https://owlbell.xyz";
-const SITE_TITLE = "Owlbell — Every emergency call answered";
+const SITE_TITLE = "Owlbell - AI operations for plumbing companies";
 const SITE_DESCRIPTION =
-  "Self-serve AI receptionist for US service businesses. Launch in under 15 minutes — answer, book, and text you the job 24/7.";
+  "Owlbell is being rebuilt as a managed AI front office for UK plumbing companies.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   keywords: [
-    "plumbing reception",
-    "managed reception",
-    "plumbing call answering",
-    "after hours plumbing calls",
-    "plumbing contractor answering service",
-    "emergency plumbing calls",
-    "24/7 plumbing reception",
+    "AI operations",
+    "AI front office",
+    "plumbing operations",
+    "missed call recovery",
+    "quote follow up",
     "Owlbell",
   ],
   openGraph: {
@@ -43,15 +31,8 @@ export const metadata: Metadata = {
     siteName: "Owlbell",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    locale: "en_US",
-    images: [
-      {
-        url: "/og.svg",
-        width: 1200,
-        height: 630,
-        alt: "Owlbell — Every emergency call answered",
-      },
-    ],
+    locale: "en_GB",
+    images: [{ url: "/og.svg", width: 1200, height: 630, alt: "Owlbell" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -59,9 +40,7 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: ["/og.svg"],
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
+  alternates: { canonical: SITE_URL },
 };
 
 const jsonLd = {
@@ -71,20 +50,14 @@ const jsonLd = {
   url: SITE_URL,
   email: "hello@owlbell.xyz",
   description: SITE_DESCRIPTION,
-  areaServed: "US",
+  areaServed: "GB",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${fraunces.variable} ${dmSans.variable} ${jetbrains.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <head>
+        <meta name="view-transition" content="same-origin" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

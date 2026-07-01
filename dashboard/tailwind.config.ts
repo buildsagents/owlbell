@@ -58,6 +58,20 @@ const config: Config = {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        "brand-accent": {
+          DEFAULT: "hsl(var(--brand-accent))",
+          foreground: "hsl(var(--brand-accent-foreground))",
+        },
+        sidebar: {
+          background: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

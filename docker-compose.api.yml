@@ -12,8 +12,8 @@ services:
   # ----------------------------------------------------------
   api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: owlbell-api
     restart: unless-stopped
     ports:

@@ -24,8 +24,8 @@ export default function AiPersonalityPage() {
 
   const handleSave = () => {
     updateSettings.mutate(localSettings, {
-      onSuccess: () => toast.success("AI settings saved successfully"),
-      onError: () => toast.error("Failed to save AI settings"),
+      onSuccess: () => toast.success("Receptionist settings saved successfully"),
+      onError: () => toast.error("Failed to save receptionist settings"),
     });
   };
 
@@ -46,7 +46,7 @@ export default function AiPersonalityPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <PageHeader title="AI Personality" description="Configure how your AI assistant behaves">
+      <PageHeader title="Voice Setup" description="Configure how your receptionist sounds and responds">
         <Button onClick={handleSave} disabled={updateSettings.isPending}>
           <Save className="mr-1 h-4 w-4" /> {updateSettings.isPending ? "Saving..." : "Save Changes"}
         </Button>
@@ -104,7 +104,7 @@ export default function AiPersonalityPage() {
         </CardContent>
       </Card>
 
-      {/* Voice & AI Settings */}
+      {/* Voice and response settings */}
       <AIVoiceSettings
         settings={voiceSettings}
         onChange={(updates) => setLocalSettings((s) => ({ ...s, ...updates }))}

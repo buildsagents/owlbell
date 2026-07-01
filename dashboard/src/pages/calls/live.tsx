@@ -38,22 +38,22 @@ export default function LiveCallsPage() {
     setListeningId(callId);
     toast.message("Listening in", {
       description: showingDemo
-        ? "Demo feed — transcript updates every few seconds."
-        : `Subscribed to live audio for call ${callId.slice(0, 8)}…`,
+        ? "Demo feed - transcript updates every few seconds."
+        : `Subscribed to live audio for call ${callId.slice(0, 8)}...`,
     });
   };
 
   const onTakeover = (callId: string) => {
     wsClient.takeOverCall(callId);
-    toast.message("Takeover requested", { description: "AI will transfer control to your line." });
+    toast.message("Takeover requested", { description: "The receptionist will transfer control to your line." });
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Live monitoring" description="Listen in, view AI reasoning, and intervene when needed">
+      <PageHeader title="Live monitoring" description="Listen in, review call reasoning, and intervene when needed">
         <div className="flex items-center gap-2 text-sm">
           <span className={`h-2 w-2 rounded-full ${isConnected ? "bg-emerald-500" : "bg-amber-500"}`} />
-          {isConnected ? "WebSocket connected" : "Connecting…"}
+          {isConnected ? "WebSocket connected" : "Connecting..."}
           {showingDemo && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-100">
               Demo live feed
@@ -76,14 +76,14 @@ export default function LiveCallsPage() {
             const reasoning =
               "reasoning" in call && typeof call.reasoning === "string"
                 ? call.reasoning
-                : "Qualify urgency → capture address → offer next slot";
+                : "Qualify urgency - capture address - offer next slot";
             return (
               <article key={call.id} className="rounded-lg border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold">{call.callerName || call.callerNumber}</p>
                     <p className="text-xs text-muted-foreground">
-                      {call.aiAgentName} · {call.status}
+                      {call.aiAgentName} / {call.status}
                     </p>
                   </div>
                   {listeningId === call.id && (
@@ -93,7 +93,7 @@ export default function LiveCallsPage() {
                 <div className="mt-4 max-h-48 overflow-y-auto rounded-md bg-muted/40 p-3 text-sm">
                   {(call.transcript || []).map((seg) => (
                     <p key={seg.id} className={seg.speaker === "ai" ? "text-primary" : ""}>
-                      <strong>{seg.speaker === "ai" ? "AI" : "Caller"}:</strong> {seg.text}
+                      <strong>{seg.speaker === "ai" ? "Agent" : "Caller"}:</strong> {seg.text}
                     </p>
                   ))}
                 </div>

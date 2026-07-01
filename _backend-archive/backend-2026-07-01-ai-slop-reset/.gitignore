@@ -1,0 +1,9 @@
+.pytest_pgdata/
+.pytest_pgdata_test/
+.pgdata/
+.coverage
+htmlcov/
+coverage.xml
+__pycache__/
+*.pyc
+.pytest_cache/

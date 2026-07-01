@@ -1,0 +1,12 @@
+2026-06-27 07:53:48.010 GMT [10404] LOG:  starting PostgreSQL 16.2 on x86_64-pc-mingw64, compiled by gcc.exe (x86_64-posix-seh-rev2, Built by MinGW-W64 project) 12.2.0, 64-bit
+2026-06-27 07:53:48.011 GMT [10404] LOG:  listening on IPv4 address "127.0.0.1", port 54087
+2026-06-27 07:53:48.044 GMT [1012] LOG:  database system was shut down at 2026-06-27 07:53:47 GMT
+2026-06-27 07:53:48.067 GMT [10404] LOG:  database system is ready to accept connections
+2026-06-27 07:58:48.064 GMT [544] LOG:  checkpoint starting: time
+2026-06-27 07:59:16.559 GMT [544] LOG:  checkpoint complete: wrote 269 buffers (1.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=28.458 s, sync=0.033 s, total=28.496 s; sync files=233, longest=0.002 s, average=0.001 s; distance=1683 kB, estimate=1683 kB; lsn=0/16271D0, redo lsn=0/1627198
+2026-06-27 08:08:48.590 GMT [544] LOG:  checkpoint starting: time
+2026-06-27 08:08:49.485 GMT [544] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.876 s, sync=0.003 s, total=0.896 s; sync files=9, longest=0.001 s, average=0.001 s; distance=3 kB, estimate=1515 kB; lsn=0/1628048, redo lsn=0/1627FF8
+2026-06-27 08:18:48.504 GMT [544] LOG:  checkpoint starting: time
+2026-06-27 08:18:50.442 GMT [544] LOG:  checkpoint complete: wrote 19 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.933 s, sync=0.003 s, total=1.939 s; sync files=11, longest=0.001 s, average=0.001 s; distance=77 kB, estimate=1371 kB; lsn=0/163B728, redo lsn=0/163B6F0
+2026-06-27 08:33:48.467 GMT [544] LOG:  checkpoint starting: time
+2026-06-27 08:33:49.359 GMT [544] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.858 s, sync=0.028 s, total=0.893 s; sync files=9, longest=0.026 s, average=0.004 s; distance=12 kB, estimate=1235 kB; lsn=0/163EB18, redo lsn=0/163EAE0

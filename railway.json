@@ -1,9 +1,10 @@
 {
   "build": {
     "dockerfilePath": "backend/Dockerfile",
-    "watchPatterns": ["backend/**"]
+    "watchPatterns": ["backend/**", "railway.json"]
   },
   "deploy": {
-    "restartPolicyType": "ALWAYS"
+    "restartPolicyType": "ALWAYS",
+    "startCommand": "sh -c \"uvicorn backend.app_factory:create_prod_app --factory --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --limit-concurrency 50 --timeout-keep-alive 30\""
   }
 }

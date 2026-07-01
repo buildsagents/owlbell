@@ -123,10 +123,10 @@ export function AIVoiceSettings({ settings, onChange }: AIVoiceSettingsProps) {
         </CardContent>
       </Card>
 
-      {/* AI Model */}
+      {/* Response model */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">AI Model</CardTitle>
+          <CardTitle className="text-base font-medium">Response Model</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -168,8 +168,8 @@ export function AIVoiceSettings({ settings, onChange }: AIVoiceSettingsProps) {
           {[
             { key: "transferEnabled" as const, label: "Call Transfer", desc: "Allow transferring to human agents" },
             { key: "voicemailEnabled" as const, label: "Voicemail", desc: "Record voicemails when unavailable" },
-            { key: "appointmentBookingEnabled" as const, label: "Appointment Booking", desc: "AI can schedule appointments" },
-            { key: "messageTakingEnabled" as const, label: "Message Taking", desc: "AI takes messages from callers" },
+            { key: "appointmentBookingEnabled" as const, label: "Appointment Booking", desc: "Receptionist can schedule appointments" },
+            { key: "messageTakingEnabled" as const, label: "Message Taking", desc: "Receptionist takes messages from callers" },
           ].map((feature) => (
             <div key={feature.key} className="flex items-center justify-between">
               <div>

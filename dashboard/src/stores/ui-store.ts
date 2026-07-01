@@ -21,7 +21,7 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      sidebarOpen: true,
+      sidebarOpen: false,
       sidebarCollapsed: false,
       theme: "system",
       activeModal: null,

@@ -43,107 +43,108 @@ function PageLoader() {
   );
 }
 
-export const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Navigate to="/dashboard" replace />,
-  },
-  {
-    path: "/login",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <LoginPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/signup",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <SignupPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/forgot-password",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <ForgotPasswordPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/reset-password",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <ResetPasswordPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/mfa-setup",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <MfaSetupPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Suspense fallback={<PageLoader />}>
-            <Outlet />
-          </Suspense>
-        </AppLayout>
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "dashboard",
-        element: <DashboardPage />,
-      },
-      {
-        path: "calls",
-        children: [
-          { index: true, element: <CallsListPage /> },
-          { path: "live", element: <LiveCallsPage /> },
-          { path: ":callId", element: <CallDetailPage /> },
-        ],
-      },
-      {
-        path: "analytics",
-        element: <AnalyticsPage />,
-      },
-      {
-        path: "messages",
-        element: <MessagesPage />,
-      },
-      {
-        path: "appointments",
-        element: <AppointmentsPage />,
-      },
-      {
-        path: "settings",
-        children: [
-          { path: "ai-personality", element: <AiPersonalityPage /> },
-          { path: "business-hours", element: <BusinessHoursPage /> },
-          { path: "knowledge-base", element: <KnowledgeBasePage /> },
-          { path: "integrations", element: <IntegrationsPage /> },
-          { path: "notifications", element: <NotificationSettingsPage /> },
-          { index: true, element: <Navigate to="ai-personality" replace /> },
-        ],
-      },
-      {
-        path: "team",
-        element: <TeamPage />,
-      },
-      {
-        path: "billing",
-        element: <BillingPage />,
-      },
-      {
+export const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <Navigate to="/dashboard" replace />,
+    },
+    {
+      path: "/login",
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <LoginPage />
+        </Suspense>
+      ),
+    },
+    {
+      path: "/signup",
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <SignupPage />
+        </Suspense>
+      ),
+    },
+    {
+      path: "/forgot-password",
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <ForgotPasswordPage />
+        </Suspense>
+      ),
+    },
+    {
+      path: "/reset-password",
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <ResetPasswordPage />
+        </Suspense>
+      ),
+    },
+    {
+      path: "/mfa-setup",
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <MfaSetupPage />
+        </Suspense>
+      ),
+    },
+    {
+      path: "/",
+      element: (
+        <ProtectedRoute>
+          <AppLayout>
+            <Suspense fallback={<PageLoader />}>
+              <Outlet />
+            </Suspense>
+          </AppLayout>
+        </ProtectedRoute>
+      ),
+      children: [
+        {
+          path: "dashboard",
+          element: <DashboardPage />,
+        },
+        {
+          path: "calls",
+          children: [
+            { index: true, element: <CallsListPage /> },
+            { path: "live", element: <LiveCallsPage /> },
+            { path: ":callId", element: <CallDetailPage /> },
+          ],
+        },
+        {
+          path: "analytics",
+          element: <AnalyticsPage />,
+        },
+        {
+          path: "messages",
+          element: <MessagesPage />,
+        },
+        {
+          path: "appointments",
+          element: <AppointmentsPage />,
+        },
+        {
+          path: "settings",
+          children: [
+            { path: "ai-personality", element: <AiPersonalityPage /> },
+            { path: "business-hours", element: <BusinessHoursPage /> },
+            { path: "knowledge-base", element: <KnowledgeBasePage /> },
+            { path: "integrations", element: <IntegrationsPage /> },
+            { path: "notifications", element: <NotificationSettingsPage /> },
+            { index: true, element: <Navigate to="ai-personality" replace /> },
+          ],
+        },
+        {
+          path: "team",
+          element: <TeamPage />,
+        },
+        {
+          path: "billing",
+          element: <BillingPage />,
+        },
+        {
           path: "agency",
           children: [
             { index: true, element: <AgencyOverviewPage /> },
@@ -157,17 +158,19 @@ export const router = createBrowserRouter([
           path: "outreach",
           element: <OutreachPage />,
         },
-    ],
-  },
-  {
-    path: "*",
-    element: (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold">404</h1>
-          <p className="text-muted-foreground mt-2">Page not found</p>
+      ],
+    },
+    {
+      path: "*",
+      element: (
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold">404</h1>
+            <p className="text-muted-foreground mt-2">Page not found</p>
+          </div>
         </div>
-      </div>
-    ),
-  },
-]);
+      ),
+    },
+  ],
+  { basename: "/app" },
+);

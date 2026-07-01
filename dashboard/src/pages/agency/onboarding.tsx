@@ -2,18 +2,18 @@ import { useNavigate } from "react-router-dom";
 import { useOnboardingPipeline } from "@/hooks/use-agency";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { Skeleton, SkeletonKanbanColumn } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
-import { Layers, CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, ClipboardCheck, PhoneCall, Rocket, ShieldCheck } from "lucide-react";
 
 const COLUMN_NAMES = [
-  "Not Started",
-  "Tenant Created",
-  "AI Configured",
-  "Phone Provisioned",
-  "Business Hours",
-  "Active",
+  "Intake",
+  "Voice Build",
+  "Knowledge",
+  "Routing",
+  "QA Review",
+  "Live",
 ];
 
 const COLUMN_STEP_RANGES: [number, number][] = [
@@ -38,9 +38,23 @@ export default function OnboardingPipelinePage() {
   const navigate = useNavigate();
   const { data: pipeline, isLoading } = useOnboardingPipeline();
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="mb-1 h-7 w-64" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonKanbanColumn key={i} cards={2} />
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (!pipeline)
-    return <EmptyState title="No pipeline data" description="Client onboarding data will appear here." icon={Layers} />;
+    return <EmptyState title="No pipeline data" description="Client onboarding data will appear here." illustration="onboarding" />;
 
   const columns = COLUMN_NAMES.map((name, idx) => ({
     name,
@@ -49,13 +63,31 @@ export default function OnboardingPipelinePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Onboarding Pipeline" description="Track client onboarding progress across all tenants">
+      <PageHeader title="Launch Pipeline" description="Move every client from intake to live without skipping voice QA.">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{pipeline.clients.length} clients in pipeline</span>
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg border bg-card p-4">
+          <ClipboardCheck className="mb-3 h-5 w-5 text-primary" />
+          <p className="font-medium">Complete the brief first</p>
+          <p className="mt-1 text-sm text-muted-foreground">Services, pricing guardrails, owner escalation, and booking rules drive the prompt.</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <PhoneCall className="mb-3 h-5 w-5 text-primary" />
+          <p className="font-medium">Listen before launch</p>
+          <p className="mt-1 text-sm text-muted-foreground">Every client needs a QA call that checks tone, interruptions, and emergency triage.</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <ShieldCheck className="mb-3 h-5 w-5 text-primary" />
+          <p className="font-medium">Escalation must be real</p>
+          <p className="mt-1 text-sm text-muted-foreground">No live account should route urgent callers without a confirmed human fallback.</p>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
         {columns.map((col) => (
           <div key={col.name} className="space-y-3">
             <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2">
@@ -111,8 +143,24 @@ export default function OnboardingPipelinePage() {
       </div>
 
       {pipeline.clients.length === 0 && (
-        <EmptyState title="No clients in pipeline" description="Provision a client to see them here." icon={Layers} />
+        <EmptyState title="No clients in pipeline" description="Provision a client to see them here." illustration="onboarding" />
       )}
+
+      <Card>
+        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+              <Rocket className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-medium">Launch rule</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Mark a client live only after a clean test call, working SMS handoff, and client-approved greeting.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

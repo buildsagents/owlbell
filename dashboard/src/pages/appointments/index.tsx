@@ -23,16 +23,16 @@ export default function AppointmentsPage() {
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const statusColors: Record<string, string> = {
-    scheduled: "bg-blue-100 text-blue-700",
-    confirmed: "bg-emerald-100 text-emerald-700",
+    scheduled: "bg-info/10 text-info",
+    confirmed: "bg-success/10 text-success",
     completed: "bg-muted text-muted-foreground",
-    cancelled: "bg-rose-100 text-rose-700",
-    no_show: "bg-amber-100 text-amber-700",
+    cancelled: "bg-destructive/10 text-destructive",
+    no_show: "bg-warning/10 text-warning",
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Appointments" description="AI-booked appointments and availability">
+      <PageHeader title="Appointments" description="Booked appointments and availability">
         <div className="flex gap-2">
           <Button variant={view === "month" ? "default" : "outline"} size="sm" onClick={() => setView("month")}>
             <CalendarDays className="mr-1 h-4 w-4" /> Month
@@ -110,7 +110,7 @@ export default function AppointmentsPage() {
               </div>
             ))
           ) : (
-            <EmptyState title="No appointments" description="Appointments booked by the AI will appear here." icon={CalendarDays} />
+            <EmptyState title="No appointments" description="Booked appointments will appear here." illustration="appointments" />
           )}
         </div>
       )}

@@ -53,7 +53,7 @@ export function MessageCard({ message, selected, onClick }: MessageCardProps) {
         <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <Phone className="h-3 w-3" />
           <span>{message.callerNumber}</span>
-          <span>•</span>
+          <span>/</span>
           <span>{formatRelative(message.createdAt)}</span>
         </div>
       </div>

@@ -29,7 +29,7 @@ export interface Subscription {
 export interface Agent {
   id: string;
   org_id: string;
-  voice_provider: 'retell' | 'vapi';
+  voice_provider: 'retell';
   provider_agent_id: string;
   phone_number: string;
   system_prompt: string;
@@ -81,7 +81,7 @@ export const PLAN_DETAILS: Record<PlanTier, {
     price: 1497,
     setupFee: null,
     features: [
-      'Agency-configured receptionist trained on your business',
+      'AI receptionist trained on your business - configured in onboarding',
       '24/7 call answering, lead capture, and owner alerts',
       'One number or call-forwarding setup',
       'Emergency routing rules',

@@ -147,10 +147,10 @@ export default function AnalyticsPage() {
                       <p className="text-sm font-medium">{caller.name || caller.phoneNumber}</p>
                       <p className="text-xs text-muted-foreground">{caller.callCount} calls</p>
                     </div>
-                    <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    <TrendingUp className="h-4 w-4 text-success" />
                   </div>
                 )) : (
-                  <EmptyState title="No caller data" description="Caller data will appear here." icon={Users} />
+                  <EmptyState title="No caller data" description="Caller data will appear here." illustration="analytics" />
                 )}
               </div>
             </div>

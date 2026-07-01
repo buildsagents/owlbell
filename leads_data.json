@@ -1,0 +1,10 @@
+{
+  "leads": [],
+  "sent_index": {},
+  "stats": {
+    "total_sent": 0,
+    "total_replied": 0,
+    "total_bounced": 0,
+    "total_unsubscribed": 0
+  }
+}

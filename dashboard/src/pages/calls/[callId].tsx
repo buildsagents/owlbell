@@ -67,7 +67,7 @@ export default function CallDetailPage() {
               <InfoRow icon={MapPin} label="Direction" value={call.direction} />
               {call.outcome && <InfoRow icon={Tag} label="Outcome" value={call.outcome.replace(/_/g, " ")} />}
               <InfoRow icon={Clock} label="Started" value={formatDate(call.startedAt, "MMM d, yyyy h:mm a")} />
-              {call.aiAgentName && <InfoRow icon={FileText} label="AI Agent" value={call.aiAgentName} />}
+              {call.aiAgentName && <InfoRow icon={FileText} label="Receptionist" value={call.aiAgentName} />}
             </div>
             {call.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-1">

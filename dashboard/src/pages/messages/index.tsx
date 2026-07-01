@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn, formatRelative } from "@/lib/utils";
 import type { MessageStatus } from "@/types/message";
-import { MessageSquare, Search, X, Phone, User, CheckCircle2, Archive } from "lucide-react";
+import { Search, X, Phone, User, CheckCircle2, Archive } from "lucide-react";
 
 const STATUSES: MessageStatus[] = ["new", "in_progress", "resolved", "archived"];
 
@@ -30,7 +30,7 @@ export default function MessagesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Messages" description="AI-taken messages from your callers" />
+      <PageHeader title="Messages" description="Messages captured from your callers" />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
@@ -62,7 +62,7 @@ export default function MessagesPage() {
               <MessageCard key={msg.id} message={msg} selected={selectedId === msg.id} onClick={() => setSelectedId(msg.id)} />
             ))
           ) : (
-            <EmptyState title="No messages" description="Messages from callers will appear here." icon={MessageSquare} />
+            <EmptyState title="No messages" description="Messages from callers will appear here." illustration="messages" />
           )}
         </div>
 
@@ -85,9 +85,9 @@ function MessageDetail({ message }: { message: import("@/types/message").Message
   const updateStatus = useUpdateMessageStatus(message.id);
 
   const statusColors: Record<string, string> = {
-    new: "bg-blue-100 text-blue-700",
-    in_progress: "bg-amber-100 text-amber-700",
-    resolved: "bg-emerald-100 text-emerald-700",
+    new: "bg-info/10 text-info",
+    in_progress: "bg-warning/10 text-warning",
+    resolved: "bg-success/10 text-success",
     archived: "bg-muted text-muted-foreground",
   };
 

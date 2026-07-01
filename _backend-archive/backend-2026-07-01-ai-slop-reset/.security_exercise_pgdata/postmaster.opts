@@ -1,0 +1,1 @@
+C:/Users/joshl/AppData/Local/Programs/Python/Python310/lib/site-packages/pgserver/pginstall/bin/postgres.exe "-D" "C:/Users/joshl/Downloads/Business/project/backend/.security_exercise_pgdata" "-h" "127.0.0.1" "-p" "54087"

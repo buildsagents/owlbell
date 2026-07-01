@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn, formatRelative } from "@/lib/utils";
 import type { TeamMember, TeamRole } from "@/types/team";
-import { Users, UserPlus, Shield, User, Eye } from "lucide-react";
+import { UserPlus, Shield, User, Eye } from "lucide-react";
 
 const roleConfig: Record<TeamRole, { label: string; icon: React.ComponentType<{className?: string}>; color: string }> = {
-  owner: { label: "Owner", icon: Shield, color: "bg-purple-100 text-purple-700" },
-  admin: { label: "Admin", icon: Shield, color: "bg-blue-100 text-blue-700" },
-  manager: { label: "Manager", icon: User, color: "bg-emerald-100 text-emerald-700" },
+  owner: { label: "Owner", icon: Shield, color: "bg-brand-accent/15 text-brand-accent" },
+  admin: { label: "Admin", icon: Shield, color: "bg-info/10 text-info" },
+  manager: { label: "Manager", icon: User, color: "bg-success/10 text-success" },
   viewer: { label: "Viewer", icon: Eye, color: "bg-muted text-muted-foreground" },
 };
 
@@ -96,7 +96,7 @@ export default function TeamPage() {
         <EmptyState
           title="You're the only member"
           description="Invite your team to collaborate."
-          icon={Users}
+          illustration="clients"
         >
           <Button onClick={() => setShowInvite(true)}>
             <UserPlus className="mr-1 h-4 w-4" /> Invite Member

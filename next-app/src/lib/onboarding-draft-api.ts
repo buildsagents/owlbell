@@ -1,8 +1,8 @@
 import { FASTAPI_V1 } from "@/lib/consolidation";
-import type { OnboardingDraft } from "@/lib/onboarding-storage";
+import type { AuditIntakeDraft } from "@/lib/onboarding-storage";
 
 export async function saveDraftRemote(
-  draft: OnboardingDraft,
+  draft: AuditIntakeDraft,
   draftId?: string,
 ): Promise<string | null> {
   try {
@@ -11,7 +11,7 @@ export async function saveDraftRemote(
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         ...draft,
-        step: draft.step,
+        step: 0,
         draftId,
       }),
     });
@@ -25,7 +25,7 @@ export async function saveDraftRemote(
 
 export async function loadDraftRemote(
   opts: { draftId?: string; email?: string },
-): Promise<{ draft: OnboardingDraft; draftId: string; step: number } | null> {
+): Promise<{ draft: AuditIntakeDraft; draftId: string } | null> {
   try {
     const params = new URLSearchParams();
     if (opts.draftId) params.set("draft_id", opts.draftId);
@@ -36,11 +36,10 @@ export async function loadDraftRemote(
     const json = await res.json();
     if (!res.ok || !json.ok || !json.found) return null;
 
-    const payload = json.draft.payload as OnboardingDraft;
+    const payload = json.draft.payload as AuditIntakeDraft;
     return {
-      draft: { ...payload, step: json.draft.step },
+      draft: payload,
       draftId: json.draft.draft_id,
-      step: json.draft.step,
     };
   } catch {
     return null;

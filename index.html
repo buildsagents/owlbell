@@ -1,174 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta http-equiv="refresh" content="0; url=/dashboard/">
-    <title>Owlbell</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-            color: #f1f5f9;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            padding: 2rem;
-        }
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 2rem;
-            font-size: 2.5rem;
-            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
-        }
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .tagline {
-            font-size: 1.125rem;
-            color: #94a3b8;
-            margin-bottom: 3rem;
-        }
-        .links {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            align-items: center;
-        }
-        .link-card {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem 1.5rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            text-decoration: none;
-            color: #e2e8f0;
-            width: 100%;
-            max-width: 360px;
-            transition: all 0.2s ease;
-        }
-        .link-card:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(99, 102, 241, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-        }
-        .link-card .icon {
-            font-size: 1.5rem;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(99, 102, 241, 0.15);
-            border-radius: 10px;
-        }
-        .link-card .info {
-            text-align: left;
-        }
-        .link-card .info .title {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        .link-card .info .desc {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            margin-top: 0.25rem;
-        }
-        .status {
-            margin-top: 3rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            color: #64748b;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #22c55e;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-        .version {
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: #475569;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="0; url=/dashboard/" />
+  <title>Owlbell — Redirecting</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+      background: #f4f1ea;
+      color: #1a1f2e;
+      text-align: center;
+      padding: 2rem;
+    }
+    .card {
+      max-width: 28rem;
+      padding: 2rem;
+      border: 1px solid #d9d3c7;
+      border-radius: 12px;
+      background: #fff;
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    h1 span { color: #b87333; }
+    p { color: #4a5568; font-size: 0.95rem; }
+    a { color: #b87333; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">&#9742;</div>
-        <h1>Owlbell</h1>
-        <p class="tagline">24/7 AI-Powered Phone Answering Service</p>
-
-        <div class="links">
-            <a href="/dashboard/" class="link-card">
-                <div class="icon">&#128202;</div>
-                <div class="info">
-                    <div class="title">Dashboard</div>
-                    <div class="desc">Business analytics &amp; configuration</div>
-                </div>
-            </a>
-            <a href="/docs" class="link-card">
-                <div class="icon">&#128220;</div>
-                <div class="info">
-                    <div class="title">API Documentation</div>
-                    <div class="desc">Interactive Swagger / OpenAPI docs</div>
-                </div>
-            </a>
-            <a href="/redoc" class="link-card">
-                <div class="icon">&#128214;</div>
-                <div class="info">
-                    <div class="title">ReDoc Reference</div>
-                    <div class="desc">Beautiful API reference documentation</div>
-                </div>
-            </a>
-            <a href="/health" class="link-card">
-                <div class="icon">&#127775;</div>
-                <div class="info">
-                    <div class="title">Health Check</div>
-                    <div class="desc">System status &amp; diagnostics</div>
-                </div>
-            </a>
-        </div>
-
-        <div class="status">
-            <span class="status-dot"></span>
-            <span>All systems operational</span>
-        </div>
-        <div class="version">v1.0.0</div>
-    </div>
+  <div class="card">
+    <h1>Owl<span>bell</span></h1>
+    <p>Opening your dashboard… <a href="/dashboard/">Continue</a></p>
+  </div>
 </body>
 </html>

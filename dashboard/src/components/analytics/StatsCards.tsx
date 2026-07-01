@@ -22,6 +22,7 @@ interface StatItem {
   changeLabel?: string;
   icon: React.ComponentType<{ className?: string }>;
   iconColor: string;
+  iconBg: string;
 }
 
 export function StatsCards({ metrics }: StatsCardsProps) {
@@ -31,28 +32,32 @@ export function StatsCards({ metrics }: StatsCardsProps) {
       value: metrics.totalCalls,
       change: metrics.totalChange,
       icon: Phone,
-      iconColor: "text-blue-500",
+      iconColor: "text-primary",
+      iconBg: "bg-primary/10",
     },
     {
       label: "Answered",
       value: metrics.answeredCalls,
       change: metrics.answeredChange,
       icon: PhoneCall,
-      iconColor: "text-emerald-500",
+      iconColor: "text-success",
+      iconBg: "bg-success/10",
     },
     {
       label: "Missed",
       value: metrics.missedCalls,
       change: metrics.missedChange,
       icon: PhoneMissed,
-      iconColor: "text-rose-500",
+      iconColor: "text-destructive",
+      iconBg: "bg-destructive/10",
     },
     {
       label: "Avg Duration",
       value: formatDuration(metrics.avgDuration),
       change: metrics.avgDurationChange,
       icon: Clock,
-      iconColor: "text-amber-500",
+      iconColor: "text-warning",
+      iconBg: "bg-warning/10",
     },
   ];
 
@@ -63,16 +68,16 @@ export function StatsCards({ metrics }: StatsCardsProps) {
         const TrendIcon = stat.change > 0 ? TrendingUp : stat.change < 0 ? TrendingDown : Minus;
         const trendColor =
           stat.change > 0
-            ? "text-emerald-500"
+            ? "text-success"
             : stat.change < 0
-            ? "text-rose-500"
+            ? "text-destructive"
             : "text-muted-foreground";
 
         return (
           <Card key={stat.label}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className={cn("rounded-lg p-2", stat.iconColor.replace("text-", "bg-").replace("500", "50"))}>
+                <div className={cn("rounded-lg p-2", stat.iconBg)}>
                   <Icon className={cn("h-5 w-5", stat.iconColor)} />
                 </div>
                 <div className="flex items-center gap-1 text-xs font-medium">

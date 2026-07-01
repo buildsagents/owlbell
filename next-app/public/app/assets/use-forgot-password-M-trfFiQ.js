@@ -1,0 +1,1 @@
+import{u as t}from"./query-0cb_Xs4L.js";import{a}from"./api-DOB9-NUk.js";function e(){return t({mutationFn:async s=>(await a.post("/auth/forgot-password",{email:s})).data})}function u(){return t({mutationFn:async s=>(await a.post("/auth/reset-password",s)).data})}export{u as a,e as u};

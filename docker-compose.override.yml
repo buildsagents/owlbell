@@ -25,11 +25,12 @@ services:
       dockerfile: ../infrastructure/docker/Dockerfile.api
       target: development
     command: >
-      uvicorn main:app
+      uvicorn backend.app_factory:create_app
+      --factory
       --host 0.0.0.0
       --port 8000
       --reload
-      --reload-dir /app
+      --reload-dir /app/backend
       --log-level debug
       --access-log
     ports:
@@ -128,7 +129,7 @@ services:
       file: infrastructure/docker/docker-compose.yml
       service: worker
     command: >
-      celery -A orchestrator.celery worker
+      celery -A workers.celery_app:celery_app worker
       --loglevel=debug
       --concurrency=2
       -Q calls,transcriptions,llm,tts,webhooks,notifications,default

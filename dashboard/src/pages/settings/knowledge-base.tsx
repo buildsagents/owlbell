@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn, formatFileSize } from "@/lib/utils";
-import { BookOpen, Upload, FileText, Trash2, RefreshCw, Plus, X, Check } from "lucide-react";
+import { Upload, FileText, Trash2, RefreshCw, Plus, X, Check } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   uploading: "bg-amber-100 text-amber-700",
@@ -37,7 +37,7 @@ export default function KnowledgeBasePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Knowledge Base" description="Documents and FAQs that train your AI" />
+      <PageHeader title="Knowledge Base" description="Documents and FAQs your receptionist can use" />
 
       <RagConfigPanel
         chunkSize={ragChunk}
@@ -99,7 +99,7 @@ export default function KnowledgeBasePage() {
               ))}
             </div>
           ) : (
-            <EmptyState title="No documents" description="Upload documents to train your AI." icon={BookOpen} />
+            <EmptyState title="No documents" description="Upload documents for your receptionist to reference." illustration="default" />
           )}
         </TabsContent>
 
@@ -120,7 +120,7 @@ export default function KnowledgeBasePage() {
               <ScriptEditor
                 storageKey="kb-faq-draft"
                 label="Answer"
-                placeholder="Write the answer callers should hear…"
+                placeholder="Write the answer callers should hear..."
                 value={newFaq.answer}
                 onChange={(answer) => setNewFaq((f) => ({ ...f, answer }))}
                 rows={4}
@@ -147,7 +147,7 @@ export default function KnowledgeBasePage() {
               ))}
             </div>
           ) : (
-            <EmptyState title="No FAQs" description="Add frequently asked questions to help your AI." icon={BookOpen} />
+            <EmptyState title="No FAQs" description="Add frequently asked questions to improve caller answers." illustration="search" />
           )}
         </TabsContent>
       </Tabs>

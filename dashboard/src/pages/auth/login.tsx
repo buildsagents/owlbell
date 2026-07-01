@@ -24,16 +24,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4 dark:from-slate-900 dark:to-slate-800">
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-sidebar-background via-sidebar-background to-primary p-4">
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-accent/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-primary/30 blur-3xl" />
+      <div className="relative w-full max-w-md">
         <div className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-brand-accent text-white shadow-sm">
             <PhoneCall className="h-5 w-5" />
           </div>
-          <span className="text-2xl font-bold">Owlbell</span>
+          <span className="text-2xl font-bold text-white">Owlbell</span>
         </div>
 
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl">Welcome back</CardTitle>
             <CardDescription>Sign in to your dashboard</CardDescription>

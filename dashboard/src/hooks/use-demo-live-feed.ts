@@ -26,7 +26,7 @@ export function buildDemoLiveSnapshot(tick: number): DemoLiveCall[] {
         text:
           tick % 4 === 0
             ? "I can get a technician out tomorrow between 9 and 11."
-            : "That works — my address is 123 Oak Street.",
+            : "That works. My address is 123 Oak Street.",
         startTime: 10 + tick,
         endTime: 14 + tick,
         confidence: 0.96,

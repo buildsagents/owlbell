@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Skeleton, SkeletonCard } from "@/components/shared/skeleton";
 import { cn, formatDate, formatPhoneNumber } from "@/lib/utils";
 import {
   Building2, Phone, Mail, Globe, Clock, CheckCircle2, Circle, ArrowLeft, Zap, TrendingUp
@@ -25,8 +25,26 @@ export default function ClientDetailPage() {
   const { data: client, isLoading } = useAgencyClient(clientId!);
   const advanceOnboarding = useAdvanceOnboarding();
 
-  if (isLoading) return <LoadingSpinner />;
-  if (!client) return <EmptyState title="Client not found" icon={Building2} />;
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <Skeleton className="mb-1 h-7 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <SkeletonCard className="lg:col-span-2" />
+          <SkeletonCard />
+        </div>
+        <SkeletonCard />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+  if (!client) return <EmptyState title="Client not found" illustration="clients" />;
 
   const completedSteps = client.onboarding.filter((s) => s.completed).length;
   const totalSteps = client.onboarding.length;
@@ -189,7 +207,7 @@ export default function ClientDetailPage() {
             <EmptyState
               title="No calls data"
               description="Call data will appear once calls are routed."
-              icon={Phone}
+              illustration="calls"
             />
           </CardContent>
         </Card>

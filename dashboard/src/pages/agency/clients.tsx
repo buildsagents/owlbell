@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatPhoneNumber } from "@/lib/utils";
-import { Building2, Search, UserPlus } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
+import { SkeletonTable } from "@/components/shared/skeleton";
 
 const statusColors: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700",
@@ -44,7 +44,7 @@ export default function AgencyClientsPage() {
       </div>
 
       {isLoading ? (
-        <LoadingSpinner />
+        <SkeletonTable rows={6} columns={6} />
       ) : clients && clients.length > 0 ? (
         <div className="rounded-lg border">
           <Table>
@@ -68,7 +68,7 @@ export default function AgencyClientsPage() {
                   onClick={() => navigate(`/agency/client/${client.id}`)}
                 >
                   <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{client.industry ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{client.industry ?? "N/A"}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">{client.plan}</Badge>
                   </TableCell>
@@ -78,7 +78,7 @@ export default function AgencyClientsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {client.phone ? formatPhoneNumber(client.phone) : "—"}
+                    {client.phone ? formatPhoneNumber(client.phone) : "N/A"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{client.callsThisMonth}</TableCell>
                   <TableCell className="text-right">
@@ -109,7 +109,7 @@ export default function AgencyClientsPage() {
         <EmptyState
           title="No clients found"
           description={search ? "Try a different search term." : "Provision your first client to get started."}
-          icon={Building2}
+          illustration="clients"
         >
           <Button onClick={() => navigate("/agency/provision")}>
             <UserPlus className="mr-1 h-4 w-4" /> New Client

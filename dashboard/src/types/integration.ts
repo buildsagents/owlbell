@@ -52,7 +52,7 @@ export const INTEGRATION_PROVIDERS: IntegrationProviderConfig[] = [
   {
     provider: "google_calendar",
     displayName: "Google Calendar",
-    description: "Sync AI-booked appointments to your Google Calendar",
+    description: "Sync booked appointments to your Google Calendar",
     icon: "calendar",
     category: "calendar",
     oauthUrl: "/api/v1/integrations/google/auth",

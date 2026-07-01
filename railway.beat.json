@@ -1,0 +1,10 @@
+{
+  "build": {
+    "dockerfilePath": "backend/Dockerfile",
+    "watchPatterns": ["backend/**"]
+  },
+  "deploy": {
+    "restartPolicyType": "ALWAYS",
+    "startCommand": "celery -A workers.celery_app:celery_app beat --loglevel=info"
+  }
+}

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "owlbell-api"
+version = "0.1.0"
+description = "Clean API foundation for the Owlbell AI operations agency"
+requires-python = ">=3.11"
+authors = [{ name = "Owlbell", email = "hello@owlbell.xyz" }]
+dependencies = [
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.32.1",
+  "pydantic==2.10.3",
+  "pydantic-settings==2.6.1",
+  "python-dotenv==1.0.1",
+  "httpx==0.28.1",
+  "orjson==3.10.12",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

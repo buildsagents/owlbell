@@ -1,41 +1,18 @@
-import DashboardMockup from "@/components/DashboardMockup";
-import HeroSection from "@/components/HeroSection";
-import HonestMathSection from "@/components/HonestMathSection";
-import HowItWorksSection from "@/components/HowItWorksSection";
-import PricingSection from "@/components/PricingSection";
-import ProofResultsSection from "@/components/ProofResultsSection";
-import RoiCalculator from "@/components/RoiCalculator";
-import SampleCallSection from "@/components/SampleCallSection";
-import SiteFooter from "@/components/SiteFooter";
-import SiteHeader from "@/components/SiteHeader";
-import TrustBar from "@/components/marketing/TrustBar";
-import LeadMagnetSection from "@/components/marketing/LeadMagnetSection";
-import VerticalSelector from "@/components/marketing/VerticalSelector";
-import StickyCtaBar from "@/components/marketing/StickyCtaBar";
-import ExitIntentModal from "@/components/marketing/ExitIntentModal";
-
 export default function HomePage() {
   return (
-    <div className="site">
-      <SiteHeader />
-
-      <main className="site-main">
-        <HeroSection />
-        <TrustBar />
-        <RoiCalculator />
-        <VerticalSelector />
-        <ProofResultsSection />
-        <SampleCallSection />
-        <HowItWorksSection />
-        <LeadMagnetSection />
-        <DashboardMockup />
-        <HonestMathSection />
-        <PricingSection />
-      </main>
-
-      <SiteFooter />
-      <StickyCtaBar />
-      <ExitIntentModal />
-    </div>
+    <main className="min-h-screen bg-white text-slate-950">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-16">
+        <p className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">
+          Owlbell
+        </p>
+        <h1 className="mt-4 max-w-2xl text-4xl font-semibold tracking-tight sm:text-6xl">
+          Frontend rebuild canvas
+        </h1>
+        <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
+          The old UI has been archived. Rebuild this interface section by
+          section from the AI operations blueprint.
+        </p>
+      </div>
+    </main>
   );
 }

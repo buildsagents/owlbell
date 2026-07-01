@@ -46,12 +46,20 @@ export function CallCard({ call, compact }: CallCardProps) {
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{formatDuration(call.duration)}</span>
-          <span>•</span>
+          <span>/</span>
           <span>{formatRelative(call.createdAt)}</span>
         </div>
       </div>
       {!compact && call.outcome && (
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium capitalize">
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize",
+            call.outcome === "appointment_booked" && "bg-success/10 text-success",
+            (call.outcome === "no_resolution" || call.outcome === "spam") && "bg-warning/10 text-warning",
+            !["appointment_booked", "no_resolution", "spam"].includes(call.outcome) &&
+              "bg-info/10 text-info"
+          )}
+        >
           {call.outcome.replace(/_/g, " ")}
         </span>
       )}

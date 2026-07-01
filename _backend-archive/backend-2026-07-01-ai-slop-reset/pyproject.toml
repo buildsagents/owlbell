@@ -1,0 +1,7 @@
+# Canonical packaging: ../pyproject.toml
+#
+# Do NOT run `pip install -e .` from this directory.
+# Use one of:
+#   cd .. && pip install -e ".[dev]" --no-deps
+#   pwsh ./install.ps1
+#   sh ./install.sh

@@ -80,7 +80,7 @@ export function ScriptEditor({
     <div className="space-y-3 rounded-lg border p-4">
       {mode === "demo" && (
         <p className="rounded-md border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-          Demo workspace — sign in to sync version history across devices.
+          Demo workspace - sign in to sync version history across devices.
         </p>
       )}
       {mode === "server" && isError && (
@@ -143,7 +143,7 @@ export function ScriptEditor({
             {versions.map((v) => (
               <li key={v.id} className="flex items-center justify-between gap-2 text-sm">
                 <span>
-                  {v.label} · {new Date(v.savedAt).toLocaleString()}
+                  {v.label} / {new Date(v.savedAt).toLocaleString()}
                 </span>
                 <Button type="button" variant="ghost" size="sm" onClick={() => restore(v.content)}>
                   <RotateCcw className="mr-1 h-3 w-3" /> Restore

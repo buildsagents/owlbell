@@ -1,77 +1,53 @@
-export const ONBOARDING_STORAGE_KEY = "owlbell_onboarding_v2";
+export const ONBOARDING_STORAGE_KEY = "owlbell_audit_intake_v1";
 
-export type OnboardingDraft = {
-  draftId?: string;
-  step: number;
-  updatedAt: string;
+export type EmergencyPlumbingAnswer = "" | "yes" | "no";
+
+export type AuditIntakeDraft = {
   businessName: string;
-  email: string;
-  serviceArea: string;
   website: string;
-  vertical: string;
-  callsPerWeek: string;
-  avgTicket: string;
-  afterHoursPct: string;
-  voiceId: string;
-  personality: string;
-  businessHours: string;
-  emergencyRouting: string;
-  kbNotes: string;
-  kbFileNames: string[];
-  calendarProvider: string;
-  crmProvider: string;
-  phoneSetup: string;
-  forwardNumber: string;
-  smsNumber: string;
-  smsNotify: boolean;
-  pricingTier: string;
-  roiMonthlyLoss?: number;
-  roiAnnualRecovery?: number;
+  serviceArea: string;
+  mainPhone: string;
+  missedCallsPerWeek: string;
+  offersEmergencyPlumbing: EmergencyPlumbingAnswer;
+  email: string;
+  leadSource: string;
+  roiRecoveredMonthly?: number;
 };
 
-export const defaultDraft = (): OnboardingDraft => ({
-  step: 0,
-  updatedAt: new Date().toISOString(),
+/** @deprecated Use AuditIntakeDraft - kept for draft API compatibility */
+export type OnboardingDraft = AuditIntakeDraft & {
+  step?: number;
+  draftId?: string;
+  updatedAt?: string;
+};
+
+export const defaultAuditIntake = (): AuditIntakeDraft => ({
   businessName: "",
-  email: "",
-  serviceArea: "",
   website: "",
-  vertical: "plumbing",
-  callsPerWeek: "40",
-  avgTicket: "350",
-  afterHoursPct: "35",
-  voiceId: "warm_professional",
-  personality: "friendly_expert",
-  businessHours: "Mon-Fri 8am-6pm",
-  emergencyRouting: "escalate_emergency",
-  kbNotes: "",
-  kbFileNames: [],
-  calendarProvider: "google",
-  crmProvider: "none",
-  phoneSetup: "forward_existing",
-  forwardNumber: "",
-  smsNumber: "",
-  smsNotify: true,
-  pricingTier: "growth",
+  serviceArea: "",
+  mainPhone: "",
+  missedCallsPerWeek: "",
+  offersEmergencyPlumbing: "",
+  email: "",
+  leadSource: "",
 });
 
-export function loadDraft(): OnboardingDraft {
-  if (typeof window === "undefined") return defaultDraft();
+export const defaultDraft = defaultAuditIntake;
+
+export function loadDraft(): AuditIntakeDraft {
+  if (typeof window === "undefined") return defaultAuditIntake();
   try {
     const raw = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-    if (!raw) return defaultDraft();
-    return { ...defaultDraft(), ...JSON.parse(raw) };
+    if (!raw) return defaultAuditIntake();
+    return { ...defaultAuditIntake(), ...JSON.parse(raw) };
   } catch {
-    return defaultDraft();
+    return defaultAuditIntake();
   }
 }
 
-export function saveDraft(draft: OnboardingDraft): void {
+export function saveDraft(draft: AuditIntakeDraft): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(
-    ONBOARDING_STORAGE_KEY,
-    JSON.stringify({ ...draft, updatedAt: new Date().toISOString() }),
-  );
+  localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(draft));
 }
 
 export function clearDraft(): void {

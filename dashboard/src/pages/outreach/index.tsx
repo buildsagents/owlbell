@@ -139,7 +139,7 @@ function LeadDetailDialog({
           <DialogDescription>
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              {lead.city}, {lead.state} &middot; {lead.trade}
+              {lead.city}, {lead.state} / {lead.trade}
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -334,7 +334,7 @@ export default function OutreachPage() {
                     <TableCell className="text-muted-foreground">{lead.email}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
-                        {lead.trade || "—"}
+                        {lead.trade || "N/A"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -349,7 +349,7 @@ export default function OutreachPage() {
                     <TableCell className="text-xs text-muted-foreground">
                       {lead.lastContacted
                         ? new Date(lead.lastContacted).toLocaleDateString()
-                        : "—"}
+                        : "N/A"}
                     </TableCell>
                     <TableCell>
                       <Button

@@ -1,55 +1,52 @@
 import { NextResponse } from "next/server";
 
-/**
- * Mints a Retell web-call access token for the homepage "Talk to OwlBell" demo.
- *
- * Server-side only — the RETELL_API_KEY never reaches the browser. The browser
- * receives just a short-lived access_token, which RetellWebClient uses to start
- * the WebRTC call. Mirrors the proven backend /test-token flow.
- */
-export async function POST(request: Request) {
-  const apiKey = process.env.RETELL_API_KEY;
-  const agentId = process.env.RETELL_DEMO_AGENT_ID ?? "agent_5a047acc926ea98243a7072218";
+export async function POST() {
+  const apiKey = process.env.RETELL_API_KEY || process.env.INTEGRATION_RETELL_API_KEY;
+  const agentId =
+    process.env.RETELL_DEMO_AGENT_ID ||
+    process.env.NEXT_PUBLIC_RETELL_DEMO_AGENT_ID ||
+    "agent_233aac32d03d073ad7774a5ca2";
 
   if (!apiKey) {
-    // Not an error the user caused — the client gracefully falls back to the film.
-    return NextResponse.json({ error: "voice_not_configured" }, { status: 503 });
+    return NextResponse.json({ error: "retell_not_configured" }, { status: 503 });
   }
 
-  let dynamicVariables: Record<string, string> = {};
-  try {
-    const body = await request.json();
-    dynamicVariables = body?.dynamic_variables ?? {};
-  } catch {
-    /* empty body is fine */
-  }
-
-  try {
-    const res = await fetch("https://api.retellai.com/v2/create-web-call", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+  const retellRes = await fetch("https://api.retellai.com/v2/create-web-call", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      agent_id: agentId,
+      retell_llm_dynamic_variables: {
+        business_name: "Northstar Plumbing",
+        business_hours: "Monday to Friday 8 AM to 6 PM, emergency cover after hours",
+        services: "Emergency plumbing, burst pipes, leaks, blocked drains, boiler callouts",
+        pricing_info: "Emergency callouts are triaged first. Final pricing depends on the job.",
+        booking_link: "https://owlbell.xyz/onboarding",
+        business_address: "Bristol, UK",
+        business_phone: "+441174960000",
+        transfer_number: "+441174960000",
+        faq_emergency_contacts: "For active flooding, collect address and callback number, give safety guidance, and escalate to the on-call plumber.",
       },
-      body: JSON.stringify({
-        agent_id: agentId,
-        retell_llm_dynamic_variables: dynamicVariables,
-      }),
-    });
+      metadata: {
+        source: "owlbell_public_demo",
+      },
+    }),
+  });
 
-    if (!res.ok) {
-      const detail = await res.text();
-      console.error("[demo/web-call] Retell error:", res.status, detail);
-      return NextResponse.json({ error: "retell_failed" }, { status: 502 });
-    }
-
-    const data = await res.json();
-    return NextResponse.json({
-      call_id: data.call_id,
-      access_token: data.access_token,
-    });
-  } catch (err) {
-    console.error("[demo/web-call] exception:", err);
-    return NextResponse.json({ error: "exception" }, { status: 500 });
+  if (!retellRes.ok) {
+    const detail = await retellRes.text();
+    console.error("[demo] Retell web call failed:", retellRes.status, detail);
+    return NextResponse.json({ error: "retell_web_call_failed" }, { status: 502 });
   }
+
+  const data = await retellRes.json();
+  return NextResponse.json({
+    provider: "retell",
+    access_token: data.access_token,
+    call_id: data.call_id,
+    agent_id: data.agent_id,
+  });
 }

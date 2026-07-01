@@ -1,0 +1,28 @@
+{
+  "kind": "fallback_script_walkthrough",
+  "generated_at": "2026-06-30",
+  "audio": "/demos/plumbing-emergency-sample.mp3",
+  "duration_seconds": 88,
+  "voices": {
+    "agent": "fallback",
+    "caller": "fallback"
+  },
+  "scenario": {
+    "trade": "plumbing",
+    "urgency": "emergency",
+    "issue": "Burst pipe under sink with active water",
+    "address": "24 Maple Road, Bristol BS6 5AL",
+    "routing": "On-call escalation with 8:30 AM follow-up held"
+  },
+  "summary": {
+    "caller_issue": "Burst pipe under sink, active water after stopcock shutoff",
+    "urgency": "Emergency - active leak - occupant home",
+    "address_captured": "24 Maple Road, Bristol BS6 5AL",
+    "owner_sms": "Emergency - burst pipe - Sarah M. - 24 Maple Road - active water - callback on file"
+  },
+  "notes": [
+    "The primary public demo is the live Retell web call on /demo.",
+    "This MP3 is a fallback script walkthrough for browsers that cannot start microphone access.",
+    "Transcript source lives in src/lib/demo-call-data.ts."
+  ]
+}

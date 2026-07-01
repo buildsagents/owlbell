@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/", "destination": "/app", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/app/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/app/:file((?:.*)\\.(?:svg|ico|png|jpg|jpeg|json|txt|webmanifest|css|js))", "destination": "/:file" },
+    { "source": "/app", "destination": "/index.html" },
+    { "source": "/app/:path*", "destination": "/index.html" }
+  ]
+}

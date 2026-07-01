@@ -10,7 +10,7 @@ import { CallVolumeChart } from "@/components/analytics/CallVolumeChart";
 import { CallCard } from "@/components/calls/CallCard";
 import { MessageCard } from "@/components/messages/MessageCard";
 import { EmptyState } from "@/components/shared/empty-state";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { SkeletonStatsGrid, SkeletonChart, Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import {
@@ -80,12 +80,18 @@ export default function DashboardPage() {
       )}
 
       {/* Stats */}
-      {analytics?.metrics && <StatsCards metrics={analytics.metrics} />}
+      {analytics?.metrics ? (
+        <StatsCards metrics={analytics.metrics} />
+      ) : (
+        <SkeletonStatsGrid />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Call Volume Chart */}
-        {analytics?.dailyData && (
+        {analytics?.dailyData ? (
           <CallVolumeChart data={analytics.dailyData} />
+        ) : (
+          <SkeletonChart />
         )}
 
         {/* Recent Calls */}
@@ -101,13 +107,15 @@ export default function DashboardPage() {
           </div>
           <div className="p-4 space-y-2">
             {callsLoading ? (
-              <LoadingSpinner />
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+              </div>
             ) : callsData?.calls && callsData.calls.length > 0 ? (
               callsData.calls.slice(0, 5).map((call) => (
                 <CallCard key={call.id} call={call} compact />
               ))
             ) : (
-              <EmptyState title="No calls yet" description="Your call history will appear here." icon={Phone} />
+              <EmptyState title="No calls yet" description="Your call history will appear here." illustration="calls" />
             )}
           </div>
         </div>
@@ -127,13 +135,15 @@ export default function DashboardPage() {
           </div>
           <div className="p-4 space-y-2">
             {messagesLoading ? (
-              <LoadingSpinner />
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+              </div>
             ) : messages && messages.length > 0 ? (
               messages.slice(0, 5).map((msg) => (
                 <MessageCard key={msg.id} message={msg} />
               ))
             ) : (
-              <EmptyState title="No messages" description="Messages from callers will appear here." icon={MessageSquare} />
+              <EmptyState title="No messages" description="Messages from callers will appear here." illustration="messages" />
             )}
           </div>
         </div>
@@ -146,44 +156,51 @@ export default function DashboardPage() {
           <div className="p-4 grid grid-cols-2 gap-3">
             <QuickAction
               icon={Settings}
-              label="Customize AI"
+              label="Tune receptionist"
               desc="Voice, persona, greeting"
+              tone="primary"
               onClick={() => navigate("/settings/ai-personality")}
             />
             <QuickAction
               icon={Users}
               label="Add Team Member"
               desc="Invite colleagues"
+              tone="info"
               onClick={() => navigate("/team")}
             />
             <QuickAction
               icon={CalendarDays}
               label="View Appointments"
-              desc="AI-booked meetings"
+              desc="Booked meetings"
+              tone="brand"
               onClick={() => navigate("/appointments")}
             />
             <QuickAction
               icon={Zap}
               label="Connect Integration"
               desc="Google, Slack, CRM"
+              tone="warning"
               onClick={() => navigate("/settings/integrations")}
             />
             <QuickAction
               icon={PhoneCall}
-              label="Test your AI now"
+              label="Test your receptionist"
               desc="Place a test call"
+              tone="success"
               onClick={() => navigate("/calls/live")}
             />
             <QuickAction
               icon={Phone}
               label="Download call report"
               desc="Export last 7 days"
+              tone="primary"
               onClick={() => navigate("/analytics")}
             />
             <QuickAction
               icon={MessageSquare}
               label="Request human review"
               desc="Escalate script to support"
+              tone="info"
               onClick={() => window.open("mailto:hello@owlbell.xyz?subject=Script%20review", "_blank")}
             />
           </div>
@@ -193,23 +210,35 @@ export default function DashboardPage() {
   );
 }
 
+const toneStyles = {
+  primary: "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground",
+  brand: "bg-brand-accent/15 text-brand-accent group-hover:bg-brand-accent group-hover:text-brand-accent-foreground",
+  success: "bg-success/10 text-success group-hover:bg-success group-hover:text-success-foreground",
+  warning: "bg-warning/10 text-warning group-hover:bg-warning group-hover:text-warning-foreground",
+  info: "bg-info/10 text-info group-hover:bg-info group-hover:text-info-foreground",
+} as const;
+
 function QuickAction({
   icon: Icon,
   label,
   desc,
+  tone = "primary",
   onClick,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   desc: string;
+  tone?: keyof typeof toneStyles;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all hover:bg-accent"
+      className="group flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all hover:shadow-sm"
     >
-      <Icon className="h-5 w-5 text-primary" />
+      <div className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${toneStyles[tone]}`}>
+        <Icon className="h-4.5 w-4.5" />
+      </div>
       <div>
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">{desc}</p>

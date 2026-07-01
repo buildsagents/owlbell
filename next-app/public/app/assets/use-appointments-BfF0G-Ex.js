@@ -1,0 +1,1 @@
+import{b as n}from"./query-0cb_Xs4L.js";import{a as r}from"./api-DOB9-NUk.js";function o(e,s){return n({queryKey:["appointments",e,s],queryFn:async()=>{const t=new URLSearchParams;return e&&t.set("from",e),s&&t.set("to",s),(await r.get(`/appointments?${t.toString()}`)).data},staleTime:6e4})}export{o as u};
